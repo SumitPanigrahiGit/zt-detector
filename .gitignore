@@ -1,0 +1,4 @@
+*.o
+*.skel.h
+build/
+__pycache__/
