@@ -4,5 +4,5 @@
 - Verified with bpftool map show and prog run_cnt (bpf_stats_enabled)
 - Learned: bpf_ringbuf_reserve writes straight into shared memory, avoiding the 512-byte stack
 - Learned: if the buffer is full, reserve returns NULL and we drop the event
-- Problems: (write any error and fix, or "none")
+- Problems: none
 - Next: user-space loader in C using libbpf skeleton to read the ring buffer
