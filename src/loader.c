@@ -19,10 +19,11 @@ static void on_signal(int sig) { (void)sig; stop = 1; }
 
 /* ---------- cgroup ID -> container ID cache ---------- */
 #define MAX_CT 256
-struct ct_entry { unsigned long long cgid; char id[13]; };
+struct ct_entry { unsigned long long cgid; char id[13]; char name[64]; };
 static struct ct_entry ct_cache[MAX_CT];
 static int ct_count = 0;
 static time_t last_scan = 0;
+static int only_containers = 0;   /* -c flag */
 
 static int is_hex64(const char *s)
 {
@@ -32,6 +33,29 @@ static int is_hex64(const char *s)
         if (!isxdigit((unsigned char)s[i]))
             return 0;
     return 1;
+}
+
+static void read_name(const char *hex, char *out, size_t outsz)
+{
+    static char buf[32768];
+    char path[256];
+    snprintf(path, sizeof(path),
+             "/var/lib/docker/containers/%.64s/config.v2.json", hex);
+    snprintf(out, outsz, "?");
+    FILE *f = fopen(path, "r");
+    if (!f)
+        return;
+    size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+    fclose(f);
+    buf[n] = '\0';
+    char *q = strstr(buf, "\"Name\":\"/");
+    if (!q)
+        return;
+    q += 9;
+    size_t i = 0;
+    while (*q && *q != '"' && i < outsz - 1)
+        out[i++] = *q++;
+    out[i] = '\0';
 }
 
 static void scan_dir(const char *base)
@@ -68,6 +92,7 @@ static void scan_dir(const char *base)
         ct_cache[ct_count].cgid = st.st_ino;
         memcpy(ct_cache[ct_count].id, hex, 12);
         ct_cache[ct_count].id[12] = '\0';
+        read_name(hex, ct_cache[ct_count].name, sizeof(ct_cache[ct_count].name));
         ct_count++;
     }
     closedir(d);
@@ -90,6 +115,14 @@ static const char *container_of(unsigned long long cgid)
         }
     }
     return "host";
+}
+
+static const char *container_name(unsigned long long cgid)
+{
+    for (int i = 0; i < ct_count; i++)
+        if (ct_cache[i].cgid == cgid)
+            return ct_cache[i].name;
+    return "-";
 }
 
 /* ---------- decoding helpers ---------- */
@@ -130,6 +163,10 @@ static int handle_event(void *ctx, void *data, size_t size)
     if (size < sizeof(*e))
         return 0;
 
+    const char *cid = container_of(e->cgroup_id);
+    if (only_containers && strcmp(cid, "host") == 0)
+        return 0;
+
     switch (e->type) {
     case EVT_EXEC:
         kind = "EXEC";
@@ -163,17 +200,21 @@ static int handle_event(void *ctx, void *data, size_t size)
         detail[0] = '\0';
     }
 
-    printf("%-8s %-8u %-8u %-6u %-13s %-16s %s\n", kind, e->pid, e->ppid, e->uid,
-           container_of(e->cgroup_id), e->comm, detail);
+    printf("%-8s %-8u %-8u %-6u %-13s %-16s %-16s %s\n", kind, e->pid, e->ppid,
+           e->uid, cid, container_name(e->cgroup_id), e->comm, detail);
     return 0;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     struct ringbuf_bpf *skel = NULL;
     struct ring_buffer *rb = NULL;
     struct sigaction sa;
     int err = 0;
+
+    for (int i = 1; i < argc; i++)
+        if (strcmp(argv[i], "-c") == 0)
+            only_containers = 1;
 
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = on_signal;
@@ -199,8 +240,8 @@ int main(void)
         goto cleanup;
     }
 
-    printf("%-8s %-8s %-8s %-6s %-13s %-16s %s\n",
-           "TYPE", "PID", "PPID", "UID", "CONTAINER", "COMM", "DETAIL");
+    printf("%-8s %-8s %-8s %-6s %-13s %-16s %-16s %s\n",
+           "TYPE", "PID", "PPID", "UID", "CONTAINER", "NAME", "COMM", "DETAIL");
 
     while (!stop) {
         err = ring_buffer__poll(rb, 100);
