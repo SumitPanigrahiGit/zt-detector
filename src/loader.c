@@ -19,7 +19,7 @@ static void on_signal(int sig) { (void)sig; stop = 1; }
 
 /* ---------- cgroup ID -> container ID cache ---------- */
 #define MAX_CT 256
-struct ct_entry { unsigned long long cgid; char id[13]; char name[64]; };
+struct ct_entry { unsigned long long cgid; char id[13]; char name[64]; char path[512]; };
 static struct ct_entry ct_cache[MAX_CT];
 static int ct_count = 0;
 static time_t last_scan = 0;
@@ -90,12 +90,26 @@ static void scan_dir(const char *base)
             continue;
 
         ct_cache[ct_count].cgid = st.st_ino;
+        snprintf(ct_cache[ct_count].path, sizeof(ct_cache[ct_count].path), "%s", path);
         memcpy(ct_cache[ct_count].id, hex, 12);
         ct_cache[ct_count].id[12] = '\0';
         read_name(hex, ct_cache[ct_count].name, sizeof(ct_cache[ct_count].name));
         ct_count++;
     }
     closedir(d);
+}
+
+/* Drop entries whose cgroup directory was removed or whose inode changed. */
+static void prune_cache(void)
+{
+    int j = 0;
+    for (int i = 0; i < ct_count; i++) {
+        struct stat st;
+        if (stat(ct_cache[i].path, &st) == 0 &&
+            (unsigned long long)st.st_ino == ct_cache[i].cgid)
+            ct_cache[j++] = ct_cache[i];
+    }
+    ct_count = j;
 }
 
 /* Returns the 12-char container ID, or "host" if the cgroup is not a container. */
@@ -108,6 +122,7 @@ static const char *container_of(unsigned long long cgid)
         time_t now = time(NULL);
         if (pass == 0 && now != last_scan) {   /* rescan at most once per second */
             last_scan = now;
+            prune_cache();
             scan_dir("/sys/fs/cgroup/system.slice");
             scan_dir("/sys/fs/cgroup/docker");
         } else {
