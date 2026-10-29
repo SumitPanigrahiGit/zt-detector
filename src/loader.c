@@ -1,5 +1,6 @@
 // loader.c - prints kernel events with the Docker container ID resolved
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
@@ -11,6 +12,7 @@
 #include <netinet/in.h>
 #include <linux/types.h>
 #include <bpf/libbpf.h>
+#include <bpf/bpf.h>
 #include "common.h"
 #include "ringbuf.skel.h"
 
@@ -211,6 +213,26 @@ static void print_stats(void)
                stats[i].count[3], stats[i].count[4]);
 }
 
+/* ---------- dropped-event counter ---------- */
+static int drops_fd = -1;
+
+static void print_drops(void)
+{
+    int ncpu = libbpf_num_possible_cpus();
+    if (drops_fd < 0 || ncpu <= 0)
+        return;
+    __u64 *vals = calloc(ncpu, sizeof(__u64));
+    if (!vals)
+        return;
+    __u32 key = 0;
+    unsigned long long total = 0;
+    if (bpf_map_lookup_elem(drops_fd, &key, vals) == 0)
+        for (int i = 0; i < ncpu; i++)
+            total += vals[i];
+    free(vals);
+    printf("\ndropped events (ring buffer full): %llu\n", total);
+}
+
 static int handle_event(void *ctx, void *data, size_t size)
 {
     const struct event *e = data;
@@ -290,6 +312,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    drops_fd = bpf_map__fd(skel->maps.drops);
     err = ringbuf_bpf__attach(skel);
     if (err) {
         fprintf(stderr, "failed to attach: %d\n", err);
@@ -319,6 +342,7 @@ int main(int argc, char **argv)
     }
 
     print_stats();
+    print_drops();
 
 cleanup:
     ring_buffer__free(rb);

@@ -13,12 +13,27 @@ struct {
     __uint(max_entries, 256 * 1024);
 } events SEC(".maps");
 
+// Counts events lost because the ring buffer was full.
+// Per-CPU: each CPU increments its own slot, so no locking is needed.
+struct {
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} drops SEC(".maps");
+
 // Reserve an event and fill the fields common to every syscall.
 static __always_inline struct event *new_event(__u32 type)
 {
     struct event *e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
-    if (!e)
-        return NULL;   // buffer full: drop, never block the kernel
+    if (!e) {
+        // Buffer full: count the loss, never block the kernel.
+        __u32 k = 0;
+        __u64 *cnt = bpf_map_lookup_elem(&drops, &k);
+        if (cnt)
+            (*cnt)++;
+        return NULL;
+    }
 
     struct task_struct *task = (struct task_struct *)bpf_get_current_task();
 
