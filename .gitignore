@@ -2,3 +2,5 @@
 *.skel.h
 build/
 __pycache__/
+data/
+*.jsonl

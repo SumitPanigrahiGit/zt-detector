@@ -233,6 +233,72 @@ static void print_drops(void)
     printf("\ndropped events (ring buffer full): %llu\n", total);
 }
 
+/* ---------- JSON Lines output (-j FILE) ---------- */
+static FILE *json_fp = NULL;
+static const char *json_path = NULL;
+
+static void json_str(FILE *f, const char *s)
+{
+    fputc('"', f);
+    for (; *s; s++) {
+        unsigned char c = (unsigned char)*s;
+        if (c == '"' || c == '\\') {
+            fputc('\\', f);
+            fputc(c, f);
+        } else if (c < 0x20) {
+            fprintf(f, "\\u%04x", c);
+        } else {
+            fputc(c, f);
+        }
+    }
+    fputc('"', f);
+}
+
+static void write_json(const struct event *e, const char *cid)
+{
+    static const char *tn[] = { "other", "exec", "connect", "ptrace", "mprotect" };
+    if (!json_fp)
+        return;
+    const char *t = (e->type >= 1 && e->type <= 4) ? tn[e->type] : tn[0];
+
+    fprintf(json_fp, "{\"ts_ns\":%llu,\"type\":\"%s\",\"pid\":%u,\"ppid\":%u,\"uid\":%u,\"container\":",
+            (unsigned long long)e->ts_ns, t, e->pid, e->ppid, e->uid);
+    json_str(json_fp, cid);
+    fputs(",\"name\":", json_fp);
+    json_str(json_fp, container_name(e->cgroup_id));
+    fputs(",\"comm\":", json_fp);
+    json_str(json_fp, e->comm);
+
+    switch (e->type) {
+    case EVT_EXEC:
+        fputs(",\"filename\":", json_fp);
+        json_str(json_fp, e->exec.filename);
+        break;
+    case EVT_CONNECT: {
+        char ip[INET6_ADDRSTRLEN];
+        if (e->connect.family == 10) {
+            inet_ntop(AF_INET6, e->connect.daddr6, ip, sizeof(ip));
+        } else {
+            struct in_addr a = { .s_addr = e->connect.daddr };
+            inet_ntop(AF_INET, &a, ip, sizeof(ip));
+        }
+        fprintf(json_fp, ",\"family\":%u,\"ip\":\"%s\",\"port\":%u",
+                e->connect.family, ip, ntohs(e->connect.dport));
+        break;
+    }
+    case EVT_PTRACE:
+        fprintf(json_fp, ",\"request\":%u,\"request_name\":\"%s\",\"target_pid\":%u",
+                e->ptrace.request, ptrace_name(e->ptrace.request), e->ptrace.target_pid);
+        break;
+    case EVT_MPROTECT:
+        fprintf(json_fp, ",\"addr\":%llu,\"len\":%llu,\"prot\":%u",
+                (unsigned long long)e->mprotect.addr,
+                (unsigned long long)e->mprotect.len, e->mprotect.prot);
+        break;
+    }
+    fputs("}\n", json_fp);
+}
+
 static int handle_event(void *ctx, void *data, size_t size)
 {
     const struct event *e = data;
@@ -247,6 +313,7 @@ static int handle_event(void *ctx, void *data, size_t size)
         return 0;
 
     record_stat(e, cid);
+    write_json(e, cid);
     if (quiet)
         return 0;
 
@@ -256,11 +323,16 @@ static int handle_event(void *ctx, void *data, size_t size)
         snprintf(detail, sizeof(detail), "%s", e->exec.filename);
         break;
     case EVT_CONNECT: {
-        char ip[INET_ADDRSTRLEN];
-        struct in_addr a = { .s_addr = e->connect.daddr };
-        inet_ntop(AF_INET, &a, ip, sizeof(ip));
+        char ip[INET6_ADDRSTRLEN];
         kind = "CONNECT";
-        snprintf(detail, sizeof(detail), "%s:%u", ip, ntohs(e->connect.dport));
+        if (e->connect.family == 10) {
+            inet_ntop(AF_INET6, e->connect.daddr6, ip, sizeof(ip));
+            snprintf(detail, sizeof(detail), "[%s]:%u", ip, ntohs(e->connect.dport));
+        } else {
+            struct in_addr a = { .s_addr = e->connect.daddr };
+            inet_ntop(AF_INET, &a, ip, sizeof(ip));
+            snprintf(detail, sizeof(detail), "%s:%u", ip, ntohs(e->connect.dport));
+        }
         break;
     }
     case EVT_PTRACE:
@@ -300,6 +372,17 @@ int main(int argc, char **argv)
             only_containers = 1;
         else if (strcmp(argv[i], "-q") == 0)
             quiet = 1;
+        else if (strcmp(argv[i], "-j") == 0 && i + 1 < argc)
+            json_path = argv[++i];
+
+    if (json_path) {
+        json_fp = fopen(json_path, "w");
+        if (!json_fp) {
+            perror("fopen json");
+            return 1;
+        }
+        setvbuf(json_fp, NULL, _IOLBF, 0);   /* line buffered: tail -f works */
+    }
 
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = on_signal;
@@ -343,6 +426,8 @@ int main(int argc, char **argv)
 
     print_stats();
     print_drops();
+    if (json_fp)
+        fclose(json_fp);
 
 cleanup:
     ring_buffer__free(rb);

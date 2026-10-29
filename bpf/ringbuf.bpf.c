@@ -4,6 +4,7 @@
 #include <bpf/bpf_core_read.h>
 #include "common.h"
 
+#define AF_INET6 10
 #define AF_INET 2   // not provided by vmlinux.h (it is a macro)
 
 char LICENSE[] SEC("license") = "GPL";
@@ -65,29 +66,48 @@ SEC("tracepoint/syscalls/sys_enter_connect")
 int trace_connect(struct trace_event_raw_sys_enter *ctx)
 {
     // connect(int fd, const struct sockaddr *uservaddr, int addrlen)
-    const void *uaddr = (const void *)ctx->args[1];
+    const char *uaddr = (const char *)ctx->args[1];
 
-    // Step 1: read only the address family (first 2 bytes)
     __u16 family = 0;
     if (bpf_probe_read_user(&family, sizeof(family), uaddr) < 0)
         return 0;
-    if (family != AF_INET)      // IPv4 only for now; IPv6 comes later
+
+    if (family == AF_INET) {
+        struct sockaddr_in sin = {};
+        if (bpf_probe_read_user(&sin, sizeof(sin), uaddr) < 0)
+            return 0;
+
+        struct event *e = new_event(EVT_CONNECT);
+        if (!e)
+            return 0;
+        __builtin_memset(e->connect.daddr6, 0, sizeof(e->connect.daddr6));
+        e->connect.family = family;
+        e->connect.daddr  = sin.sin_addr.s_addr;
+        e->connect.dport  = sin.sin_port;
+        bpf_ringbuf_submit(e, 0);
         return 0;
+    }
 
-    // Step 2: now we know the layout, read the full sockaddr_in
-    struct sockaddr_in sin = {};
-    if (bpf_probe_read_user(&sin, sizeof(sin), uaddr) < 0)
+    if (family == AF_INET6) {
+        // sockaddr_in6: family(2) port(2) flowinfo(4) addr(16) scope_id(4)
+        __u16 port = 0;
+        __u8 addr6[16] = {};
+        if (bpf_probe_read_user(&port, sizeof(port), uaddr + 2) < 0)
+            return 0;
+        if (bpf_probe_read_user(addr6, sizeof(addr6), uaddr + 8) < 0)
+            return 0;
+
+        struct event *e = new_event(EVT_CONNECT);
+        if (!e)
+            return 0;
+        __builtin_memcpy(e->connect.daddr6, addr6, sizeof(addr6));
+        e->connect.family = family;
+        e->connect.daddr  = 0;
+        e->connect.dport  = port;
+        bpf_ringbuf_submit(e, 0);
         return 0;
+    }
 
-    struct event *e = new_event(EVT_CONNECT);
-    if (!e)
-        return 0;
-
-    e->connect.family = family;
-    e->connect.daddr  = sin.sin_addr.s_addr;
-    e->connect.dport  = sin.sin_port;
-
-    bpf_ringbuf_submit(e, 0);
     return 0;
 }
 
