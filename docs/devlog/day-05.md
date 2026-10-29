@@ -4,5 +4,5 @@
 - Events from the kernel ring buffer now print as PID / COMM / FILENAME
 - Learned: ring_buffer__poll sleeps in epoll, so no busy-waiting
 - Learned: signal handler only sets a volatile sig_atomic_t flag
-- Problems: (write any error and fix, or "none")
+- Problems: none
 - Next: add PPID, UID and cgroup ID to each event

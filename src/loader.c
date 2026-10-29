@@ -18,7 +18,7 @@ static int handle_event(void *ctx, void *data, size_t size)
     const struct exec_event *e = data;
     if (size < sizeof(*e))
         return 0;   // ignore malformed events
-    printf("%-8u %-16s %s\n", e->pid, e->comm, e->filename);
+    printf("%-8u %-8u %-6u %-12llu %-16s %s\n", e->pid, e->ppid, e->uid, (unsigned long long)e->cgroup_id, e->comm, e->filename);
     return 0;
 }
 
@@ -56,7 +56,7 @@ int main(void)
         goto cleanup;
     }
 
-    printf("%-8s %-16s %s\n", "PID", "COMM", "FILENAME");
+    printf("%-8s %-8s %-6s %-12s %-16s %s\n", "PID", "PPID", "UID", "CGROUP_ID", "COMM", "FILENAME");
 
     // 4) poll loop: sleeps in epoll until data arrives (or 100 ms passes)
     while (!stop) {
