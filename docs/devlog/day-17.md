@@ -1,0 +1,11 @@
+# Day 17 - Overhead measurement
+- Added scripts/bench.sh: baseline vs traced workload, loader CPU from /proc/<pid>/stat, per-event cost from bpf_stats
+- Results (3 runs, WSL2, 3000 execs of /bin/true):
+  - Workload slowdown: X%
+  - Loader CPU idle: X% of one core
+  - Loader CPU under heavy load: X% of one core
+  - eBPF average cost: X ns per event
+- Learned: report overhead together with event rate; exec-storm is a worst case
+- Learned: bpf_stats_enabled costs a little itself, so enable it only while measuring
+- Problems: (write any error and fix, or "none")
+- Next: count dropped events with a BPF map
