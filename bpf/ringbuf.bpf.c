@@ -75,3 +75,18 @@ int trace_connect(struct trace_event_raw_sys_enter *ctx)
     bpf_ringbuf_submit(e, 0);
     return 0;
 }
+
+SEC("tracepoint/syscalls/sys_enter_ptrace")
+int trace_ptrace(struct trace_event_raw_sys_enter *ctx)
+{
+    // ptrace(long request, long pid, unsigned long addr, unsigned long data)
+    struct event *e = new_event(EVT_PTRACE);
+    if (!e)
+        return 0;
+
+    e->ptrace.request    = (__u32)ctx->args[0];
+    e->ptrace.target_pid = (__u32)ctx->args[1];
+
+    bpf_ringbuf_submit(e, 0);
+    return 0;
+}

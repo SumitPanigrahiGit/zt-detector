@@ -13,6 +13,26 @@
 static volatile sig_atomic_t stop = 0;
 static void on_signal(int sig) { (void)sig; stop = 1; }
 
+static const char *ptrace_name(unsigned int r)
+{
+    switch (r) {
+    case 0:      return "TRACEME";
+    case 1:      return "PEEKTEXT";
+    case 2:      return "PEEKDATA";
+    case 4:      return "POKETEXT";
+    case 5:      return "POKEDATA";
+    case 7:      return "CONT";
+    case 8:      return "KILL";
+    case 9:      return "SINGLESTEP";
+    case 12:     return "GETREGS";
+    case 13:     return "SETREGS";
+    case 16:     return "ATTACH";
+    case 17:     return "DETACH";
+    case 0x4206: return "SEIZE";
+    default:     return "OTHER";
+    }
+}
+
 static int handle_event(void *ctx, void *data, size_t size)
 {
     const struct event *e = data;
@@ -35,6 +55,11 @@ static int handle_event(void *ctx, void *data, size_t size)
         snprintf(detail, sizeof(detail), "%s:%u", ip, ntohs(e->connect.dport));
         break;
     }
+    case EVT_PTRACE:
+        kind = "PTRACE";
+        snprintf(detail, sizeof(detail), "%s -> pid %u",
+                 ptrace_name(e->ptrace.request), e->ptrace.target_pid);
+        break;
     default:
         kind = "OTHER";
         detail[0] = '\0';
