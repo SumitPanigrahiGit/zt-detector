@@ -169,6 +169,48 @@ static void prot_str(unsigned int p, char *out)
     out[3] = '\0';
 }
 
+/* ---------- per-container event counters ---------- */
+#define MAX_STATS 256
+struct stat_entry {
+    unsigned long long cgid;
+    char id[13];
+    char name[64];
+    unsigned long long count[5];   /* index = event type (1..4) */
+};
+static struct stat_entry stats[MAX_STATS];
+static int stat_count = 0;
+static int quiet = 0;              /* -q flag */
+
+static void record_stat(const struct event *e, const char *cid)
+{
+    if (e->type < 1 || e->type > 4)
+        return;
+    for (int i = 0; i < stat_count; i++) {
+        if (stats[i].cgid == e->cgroup_id) {
+            stats[i].count[e->type]++;
+            return;
+        }
+    }
+    if (stat_count >= MAX_STATS)
+        return;                    /* table full: ignore new groups */
+    struct stat_entry *st = &stats[stat_count++];
+    st->cgid = e->cgroup_id;
+    snprintf(st->id, sizeof(st->id), "%s", cid);
+    snprintf(st->name, sizeof(st->name), "%s", container_name(e->cgroup_id));
+    st->count[e->type] = 1;
+}
+
+static void print_stats(void)
+{
+    printf("\n%-13s %-16s %8s %8s %8s %8s\n",
+           "CONTAINER", "NAME", "EXEC", "CONNECT", "PTRACE", "MPROTECT");
+    for (int i = 0; i < stat_count; i++)
+        printf("%-13s %-16s %8llu %8llu %8llu %8llu\n",
+               stats[i].id, stats[i].name,
+               stats[i].count[1], stats[i].count[2],
+               stats[i].count[3], stats[i].count[4]);
+}
+
 static int handle_event(void *ctx, void *data, size_t size)
 {
     const struct event *e = data;
@@ -180,6 +222,10 @@ static int handle_event(void *ctx, void *data, size_t size)
 
     const char *cid = container_of(e->cgroup_id);
     if (only_containers && strcmp(cid, "host") == 0)
+        return 0;
+
+    record_stat(e, cid);
+    if (quiet)
         return 0;
 
     switch (e->type) {
@@ -230,6 +276,8 @@ int main(int argc, char **argv)
     for (int i = 1; i < argc; i++)
         if (strcmp(argv[i], "-c") == 0)
             only_containers = 1;
+        else if (strcmp(argv[i], "-q") == 0)
+            quiet = 1;
 
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = on_signal;
@@ -269,6 +317,8 @@ int main(int argc, char **argv)
             break;
         }
     }
+
+    print_stats();
 
 cleanup:
     ring_buffer__free(rb);
