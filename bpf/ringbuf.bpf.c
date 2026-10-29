@@ -90,3 +90,28 @@ int trace_ptrace(struct trace_event_raw_sys_enter *ctx)
     bpf_ringbuf_submit(e, 0);
     return 0;
 }
+
+#define PROT_EXEC 0x4
+
+SEC("tracepoint/syscalls/sys_enter_mprotect")
+int trace_mprotect(struct trace_event_raw_sys_enter *ctx)
+{
+    // mprotect(void *addr, size_t len, int prot)
+    __u32 prot = (__u32)ctx->args[2];
+
+    // Only report calls that make memory executable (cuts noise a lot)
+    if (!(prot & PROT_EXEC))
+        return 0;
+
+    struct event *e = new_event(EVT_MPROTECT);
+    if (!e)
+        return 0;
+
+    e->mprotect.addr = ctx->args[0];
+    e->mprotect.len  = ctx->args[1];
+    e->mprotect.prot = prot;
+    e->mprotect._pad = 0;
+
+    bpf_ringbuf_submit(e, 0);
+    return 0;
+}

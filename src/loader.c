@@ -33,6 +33,14 @@ static const char *ptrace_name(unsigned int r)
     }
 }
 
+static void prot_str(unsigned int p, char *out)
+{
+    out[0] = (p & 1) ? 'R' : '-';
+    out[1] = (p & 2) ? 'W' : '-';
+    out[2] = (p & 4) ? 'X' : '-';
+    out[3] = '\0';
+}
+
 static int handle_event(void *ctx, void *data, size_t size)
 {
     const struct event *e = data;
@@ -60,6 +68,16 @@ static int handle_event(void *ctx, void *data, size_t size)
         snprintf(detail, sizeof(detail), "%s -> pid %u",
                  ptrace_name(e->ptrace.request), e->ptrace.target_pid);
         break;
+    case EVT_MPROTECT: {
+        char ps[4];
+        prot_str(e->mprotect.prot, ps);
+        kind = "MPROTECT";
+        snprintf(detail, sizeof(detail), "addr=0x%llx len=%llu prot=%s%s",
+                 (unsigned long long)e->mprotect.addr,
+                 (unsigned long long)e->mprotect.len, ps,
+                 ((e->mprotect.prot & 6) == 6) ? "  <-- W+X!" : "");
+        break;
+    }
     default:
         kind = "OTHER";
         detail[0] = '\0';
