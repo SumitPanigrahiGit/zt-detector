@@ -10,6 +10,7 @@ enum event_type {
     EVT_CONNECT  = 2,
     EVT_PTRACE   = 3,   // Day 9
     EVT_MPROTECT = 4,   // Day 10
+    EVT_EXIT     = 5,   // Day 22
 };
 
 struct event {
@@ -27,6 +28,7 @@ struct event {
         struct { __u8 daddr6[16]; __u32 daddr; __u16 dport; __u16 family; } connect;   // network byte order
         struct { __u32 request; __u32 target_pid; } ptrace;
         struct { __u64 addr; __u64 len; __u32 prot; __u32 _pad; } mprotect;
+        struct { __u32 exit_code; __u32 _pad; } exit;   // raw: (status << 8) | signal
     };
 };
 

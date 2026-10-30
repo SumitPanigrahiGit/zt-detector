@@ -77,5 +77,14 @@ echo "== 5) regression: smoke test =="
   && pass "smoke test" || fail "smoke test"
 
 echo
+echo "== 6) process exit (Day 22) =="
+sudo rm -f /tmp/zt_v6.jsonl
+start_loader -q -j /tmp/zt_v6.jsonl
+sh -c 'exit 3'
+sleep 1
+stop_loader
+sudo grep '"type":"exit"' /tmp/zt_v6.jsonl | grep -q '"exit_code":3' \
+  && pass "exit code 3 captured" || fail "no exit event with code 3"
+
 [ "$FAIL" -eq 0 ] && echo "ALL VERIFIED" || { echo "SOME CHECKS FAILED"; exit 1; }
 

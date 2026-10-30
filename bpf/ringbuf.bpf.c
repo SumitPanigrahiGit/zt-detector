@@ -150,3 +150,26 @@ int trace_mprotect(struct trace_event_raw_sys_enter *ctx)
     bpf_ringbuf_submit(e, 0);
     return 0;
 }
+
+SEC("tracepoint/sched/sched_process_exit")
+int trace_exit(void *ctx)
+{
+    __u64 id = bpf_get_current_pid_tgid();
+
+    // Fires for every thread. Only report when the thread group leader
+    // exits (tid == tgid), i.e. the whole process is ending.
+    if ((__u32)id != (__u32)(id >> 32))
+        return 0;
+
+    struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+
+    struct event *e = new_event(EVT_EXIT);
+    if (!e)
+        return 0;
+
+    e->exit.exit_code = (__u32)BPF_CORE_READ(task, exit_code);
+    e->exit._pad = 0;
+
+    bpf_ringbuf_submit(e, 0);
+    return 0;
+}

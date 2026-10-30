@@ -258,10 +258,10 @@ static void json_str(FILE *f, const char *s)
 
 static void write_json(const struct event *e, const char *cid)
 {
-    static const char *tn[] = { "other", "exec", "connect", "ptrace", "mprotect" };
+    static const char *tn[] = { "other", "exec", "connect", "ptrace", "mprotect", "exit" };
     if (!json_fp)
         return;
-    const char *t = (e->type >= 1 && e->type <= 4) ? tn[e->type] : tn[0];
+    const char *t = (e->type >= 1 && e->type <= 5) ? tn[e->type] : tn[0];
 
     fprintf(json_fp, "{\"ts_ns\":%llu,\"type\":\"%s\",\"pid\":%u,\"ppid\":%u,\"uid\":%u,\"container\":",
             (unsigned long long)e->ts_ns, t, e->pid, e->ppid, e->uid);
@@ -291,6 +291,10 @@ static void write_json(const struct event *e, const char *cid)
     case EVT_PTRACE:
         fprintf(json_fp, ",\"request\":%u,\"request_name\":\"%s\",\"target_pid\":%u",
                 e->ptrace.request, ptrace_name(e->ptrace.request), e->ptrace.target_pid);
+        break;
+    case EVT_EXIT:
+        fprintf(json_fp, ",\"exit_code\":%u,\"signal\":%u",
+                e->exit.exit_code >> 8, e->exit.exit_code & 0x7f);
         break;
     case EVT_MPROTECT:
         fprintf(json_fp, ",\"addr\":%llu,\"len\":%llu,\"prot\":%u",
@@ -341,6 +345,11 @@ static int handle_event(void *ctx, void *data, size_t size)
         kind = "PTRACE";
         snprintf(detail, sizeof(detail), "%s -> pid %u",
                  ptrace_name(e->ptrace.request), e->ptrace.target_pid);
+        break;
+    case EVT_EXIT:
+        kind = "EXIT";
+        snprintf(detail, sizeof(detail), "code=%u signal=%u",
+                 e->exit.exit_code >> 8, e->exit.exit_code & 0x7f);
         break;
     case EVT_MPROTECT: {
         char ps[4];
