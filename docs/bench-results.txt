@@ -1,48 +1,48 @@
 == 1) Baseline: 3000 execs, no tracer ==
-workload time: 4.338s
-
-== 2) Idle: loader CPU for 10 s with no activity ==
-loader CPU while idle: 0.100% of one core
-
-== 3) Load: same 3000 execs with tracer running ==
-workload time with tracer: 4.244s
-loader CPU under load: 1.141% of one core
-
-================ RESULTS ================
-Workload slowdown (3000 execs):   -2.167%   (4.338s -> 4.244s)
-Loader CPU idle:                0.100% of one core
-Loader CPU under heavy load:    1.141% of one core
-eBPF programs: 24383 events, average 6952.760 ns per event
-=========================================
-== 1) Baseline: 3000 execs, no tracer ==
-workload time: 4.032s
-
-== 2) Idle: loader CPU for 10 s with no activity ==
-loader CPU while idle: 0.100% of one core
-
-== 3) Load: same 3000 execs with tracer running ==
-workload time with tracer: 4.326s
-loader CPU under load: 1.123% of one core
-
-================ RESULTS ================
-Workload slowdown (3000 execs):   7.292%   (4.032s -> 4.326s)
-Loader CPU idle:                0.100% of one core
-Loader CPU under heavy load:    1.123% of one core
-eBPF programs: 36676 events, average 4761.347 ns per event
-=========================================
-== 1) Baseline: 3000 execs, no tracer ==
-workload time: 4.045s
+workload time: 4.657s
 
 == 2) Idle: loader CPU for 10 s with no activity ==
 loader CPU while idle: 0.000% of one core
 
 == 3) Load: same 3000 execs with tracer running ==
-workload time with tracer: 4.331s
-loader CPU under load: 1.309% of one core
+workload time with tracer: 3.965s
+loader CPU under load: 1.606% of one core
 
 ================ RESULTS ================
-Workload slowdown (3000 execs):   7.070%   (4.045s -> 4.331s)
+Workload slowdown (3000 execs):   -14.859%   (4.657s -> 3.965s)
 Loader CPU idle:                0.000% of one core
-Loader CPU under heavy load:    1.309% of one core
-eBPF programs: 48969 events, average 3636.579 ns per event
+Loader CPU under heavy load:    1.606% of one core
+eBPF programs: 24383 events, average 6444.328 ns per event
+=========================================
+== 1) Baseline: 3000 execs, no tracer ==
+workload time: 4.146s
+
+== 2) Idle: loader CPU for 10 s with no activity ==
+loader CPU while idle: 0.100% of one core
+
+== 3) Load: same 3000 execs with tracer running ==
+workload time with tracer: 3.934s
+loader CPU under load: 1.213% of one core
+
+================ RESULTS ================
+Workload slowdown (3000 execs):   -5.113%   (4.146s -> 3.934s)
+Loader CPU idle:                0.100% of one core
+Loader CPU under heavy load:    1.213% of one core
+eBPF programs: 36676 events, average 4418.065 ns per event
+=========================================
+== 1) Baseline: 3000 execs, no tracer ==
+workload time: 3.835s
+
+== 2) Idle: loader CPU for 10 s with no activity ==
+loader CPU while idle: 0.000% of one core
+
+== 3) Load: same 3000 execs with tracer running ==
+workload time with tracer: 3.815s
+loader CPU under load: 1.449% of one core
+
+================ RESULTS ================
+Workload slowdown (3000 execs):   -0.522%   (3.835s -> 3.815s)
+Loader CPU idle:                0.000% of one core
+Loader CPU under heavy load:    1.449% of one core
+eBPF programs: 48969 events, average 3289.699 ns per event
 =========================================
