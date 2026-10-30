@@ -13,7 +13,7 @@ start_loader() { sudo ./build/loader "$@" > /tmp/zt_v_out.txt 2>&1 & sleep 2; }
 stop_loader()  { sudo pkill -INT -x loader; sleep 1.5; wait 2>/dev/null; }
 
 echo "== 1) ptrace (Day 9) =="
-rm -f /tmp/zt_v1.jsonl
+sudo rm -f /tmp/zt_v1.jsonl
 start_loader -q -j /tmp/zt_v1.jsonl
 strace -e trace=none true 2> /dev/null
 sleep 60 & SP=$!
@@ -24,7 +24,7 @@ stop_loader
 grep -q '"type":"ptrace"' /tmp/zt_v1.jsonl && pass "ptrace events captured" || fail "no ptrace events"
 
 echo "== 2) mprotect W+X (Day 10) =="
-rm -f /tmp/zt_v2.jsonl
+sudo rm -f /tmp/zt_v2.jsonl
 start_loader -q -j /tmp/zt_v2.jsonl
 python3 - << 'PY'
 import ctypes
@@ -42,10 +42,12 @@ grep '"type":"mprotect"' /tmp/zt_v2.jsonl | grep -q '"prot":7' \
   && pass "W+X mprotect captured" || fail "no W+X mprotect"
 
 echo "== 3) dropped-event counter (Day 18) =="
-start_loader -q
-sudo kill -STOP "$(pgrep -nx loader)"
-for i in $(seq 3000); do /bin/true; done
-sudo kill -CONT "$(pgrep -nx loader)"
+sudo setsid ./build/loader -q > /tmp/zt_v_out.txt 2>&1 < /dev/null &
+sleep 2
+LP=$(pgrep -x loader | tail -1)
+sudo kill -STOP "$LP"
+( for i in $(seq 3000); do /bin/true; done ) < /dev/null
+sudo kill -CONT "$LP"
 sleep 2
 stop_loader
 D=$(grep "dropped events" /tmp/zt_v_out.txt | awk '{print $NF}')
@@ -53,18 +55,21 @@ D=$(grep "dropped events" /tmp/zt_v_out.txt | awk '{print $NF}')
 
 echo "== 4) stale cache and container names (Day 14) =="
 docker rm -f zt-a zt-b > /dev/null 2>&1
-rm -f /tmp/zt_v4.jsonl
+sudo rm -f /tmp/zt_v4.jsonl
 start_loader -q -c -j /tmp/zt_v4.jsonl
 docker run -d --name zt-a alpine sleep 600 > /dev/null
 docker exec zt-a whoami > /dev/null
+sleep 2
 docker rm -f zt-a > /dev/null
 docker run -d --name zt-b alpine sleep 600 > /dev/null
 docker exec zt-b whoami > /dev/null
+sleep 2
 docker rm -f zt-b > /dev/null
 sleep 1
 stop_loader
-grep '"name":"zt-a"' /tmp/zt_v4.jsonl | grep -q whoami && A=1
-grep '"name":"zt-b"' /tmp/zt_v4.jsonl | grep -q whoami && B=1
+A=0; B=0
+sudo grep '"name":"zt-a"' /tmp/zt_v4.jsonl | grep -q whoami && A=1
+sudo grep '"name":"zt-b"' /tmp/zt_v4.jsonl | grep -q whoami && B=1
 [ "$A" = 1 ] && [ "$B" = 1 ] && pass "zt-a and zt-b attributed correctly" || fail "container names wrong"
 
 echo "== 5) regression: smoke test =="

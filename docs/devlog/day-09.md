@@ -4,5 +4,5 @@
 - Tested with strace (TRACEME) and strace -p (attach to a running process)
 - Learned: ptrace is the debugger syscall and a classic process-injection primitive
 - Learned: ATTACH/SEIZE on another PID plus POKETEXT/SETREGS is the suspicious pattern
-- Problems: (write any error and fix, or "none")
+- Problems: none recorded
 - Next: mprotect tracing (executable memory)

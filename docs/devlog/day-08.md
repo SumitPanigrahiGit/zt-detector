@@ -5,5 +5,5 @@
 - Loader prints TYPE / PID / PPID / UID / CGROUP_ID / COMM / DETAIL
 - Learned: network port and address are in network byte order, so user space uses ntohs/inet_ntop
 - Learned: one ring buffer with a type field keeps event order across syscalls
-- Problems: (write any error and fix, or "none")
+- Problems: none recorded
 - Next: ptrace tracing

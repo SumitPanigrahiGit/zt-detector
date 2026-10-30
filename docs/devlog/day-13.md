@@ -3,5 +3,5 @@
 - Added NAME column and -c flag (container events only)
 - Learned: user-space filtering is fine for low-volume events; high-volume ones should be filtered in the kernel
 - Known limit: cache entries are not removed when a container is deleted (to fix next)
-- Problems: (write any error and fix, or "none")
+- Problems: none recorded
 - Next: tests, cleanup, tag v0.2, week 2 summary

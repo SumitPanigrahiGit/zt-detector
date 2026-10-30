@@ -24,7 +24,7 @@ static void on_signal(int sig) { (void)sig; stop = 1; }
 struct ct_entry { unsigned long long cgid; char id[13]; char name[64]; char path[512]; };
 static struct ct_entry ct_cache[MAX_CT];
 static int ct_count = 0;
-static time_t last_scan = 0;
+static long long last_scan = 0;   /* ms, CLOCK_MONOTONIC */
 static int only_containers = 0;   /* -c flag */
 
 static int is_hex64(const char *s)
@@ -121,8 +121,10 @@ static const char *container_of(unsigned long long cgid)
         for (int i = 0; i < ct_count; i++)
             if (ct_cache[i].cgid == cgid)
                 return ct_cache[i].id;
-        time_t now = time(NULL);
-        if (pass == 0 && now != last_scan) {   /* rescan at most once per second */
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        long long now = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
+        if (pass == 0 && now - last_scan >= 20) {   /* rescan at most once per second */
             last_scan = now;
             prune_cache();
             scan_dir("/sys/fs/cgroup/system.slice");
