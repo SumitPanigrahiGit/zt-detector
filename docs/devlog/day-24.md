@@ -1,0 +1,11 @@
+# Day 24 - In-kernel container filter
+- Added BPF hash map host_cgroups, per-CPU counter "filtered", and a global filter_enabled set by the loader when -c is used
+- new_event() returns early (before touching the ring buffer) for cgroups confirmed as host
+- Fail-open design: unknown cgroups still reach user space; the loader confirms a host cgroup only after a fresh cgroup scan, then writes it to the map
+- Announced containers are removed from the host map (cgroup id reuse protection)
+- Added check 8 to verify_all.sh: loader frozen, 3000 host execs, dropped < 50 and filtered > 2000
+- Learned: filtering before ring buffer reserve saves both kernel work and user-space wakeups
+- Learned: a fail-closed filter would have recreated the new-container blind spot from Day 21
+- Known limits: first event(s) of each host cgroup still pass; the host map can fill at 4096 entries (then it fails open); filtering only active with -c
+- Problems: none recorded
+- Next: per-event latency timestamps

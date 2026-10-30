@@ -23,9 +23,39 @@ struct {
     __type(value, __u64);
 } drops SEC(".maps");
 
+// Cgroups that user space has confirmed are NOT containers.
+// Fail-open: unknown cgroups are still reported.
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(max_entries, 4096);
+    __type(key, __u64);
+    __type(value, __u8);
+} host_cgroups SEC(".maps");
+
+// Events dropped in the kernel by the host filter (not a loss: intended).
+struct {
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u64);
+} filtered SEC(".maps");
+
+// Set by user space after load (loader -c).
+volatile __u32 filter_enabled = 0;
+
 // Reserve an event and fill the fields common to every syscall.
 static __always_inline struct event *new_event(__u32 type)
 {
+    if (filter_enabled) {
+        __u64 cg = bpf_get_current_cgroup_id();
+        if (bpf_map_lookup_elem(&host_cgroups, &cg)) {
+            __u32 fk = 0;
+            __u64 *fn = bpf_map_lookup_elem(&filtered, &fk);
+            if (fn)
+                (*fn)++;
+            return NULL;   // known host cgroup: skip before touching the ring buffer
+        }
+    }
     struct event *e = bpf_ringbuf_reserve(&events, sizeof(*e), 0);
     if (!e) {
         // Buffer full: count the loss, never block the kernel.

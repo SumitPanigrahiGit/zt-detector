@@ -99,5 +99,22 @@ sudo grep -E '"type":"container_start".*"name":"zt-life"' /tmp/zt_v7.jsonl | gre
 sudo grep -E '"type":"container_stop".*"name":"zt-life"' /tmp/zt_v7.jsonl | grep -q . && S2=1 || S2=0
 [ "$S1" = 1 ] && [ "$S2" = 1 ] && pass "container start and stop recorded with name" || fail "start=$S1 stop=$S2"
 
+echo "== 8) in-kernel container filter (Day 24) =="
+sudo setsid ./build/loader -q -c > /tmp/zt_v_out.txt 2>&1 < /dev/null &
+sleep 2
+for i in 1 2 3; do /bin/true; done
+sleep 1
+LP=$(pgrep -x loader | tail -1)
+sudo kill -STOP "$LP"
+( for i in $(seq 3000); do /bin/true; done ) < /dev/null
+sudo kill -CONT "$LP"
+sleep 2
+stop_loader
+D8=$(grep "dropped events" /tmp/zt_v_out.txt | awk '{print $NF}')
+F8=$(grep "filtered in kernel" /tmp/zt_v_out.txt | awk '{print $NF}')
+[ "${D8:-999}" -lt 50 ] && [ "${F8:-0}" -gt 2000 ] \
+  && pass "host events filtered in kernel (filtered=$F8, dropped=$D8)" \
+  || fail "filter not effective (filtered='$F8', dropped='$D8')"
+
 [ "$FAIL" -eq 0 ] && echo "ALL VERIFIED" || { echo "SOME CHECKS FAILED"; exit 1; }
 

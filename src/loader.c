@@ -310,6 +310,60 @@ static void write_json(const struct event *e, const char *cid)
     fputs("}\n", json_fp);
 }
 
+/* ---------- in-kernel host filter ---------- */
+static int host_fd = -1;
+static int filtered_fd = -1;
+static unsigned long long cand[256];   /* cgroups seen as "host", not yet confirmed */
+static int cand_n = 0;
+
+static void note_host(unsigned long long cg)
+{
+    for (int i = 0; i < cand_n; i++)
+        if (cand[i] == cg)
+            return;
+    if (cand_n < 256)
+        cand[cand_n++] = cg;
+}
+
+static void host_forget(unsigned long long cg)
+{
+    if (host_fd >= 0)
+        bpf_map_delete_elem(host_fd, &cg);
+}
+
+/* Called right after a fresh cgroup scan: a candidate that is still not a
+ * container is confirmed host and handed to the kernel filter. */
+static void promote_hosts(void)
+{
+    __u8 one = 1;
+    for (int i = 0; i < cand_n; i++) {
+        int is_ct = 0;
+        for (int j = 0; j < ct_count; j++)
+            if (ct_cache[j].cgid == cand[i])
+                is_ct = 1;
+        if (!is_ct && host_fd >= 0)
+            bpf_map_update_elem(host_fd, &cand[i], &one, BPF_ANY);
+    }
+    cand_n = 0;
+}
+
+static void print_filtered(void)
+{
+    int ncpu = libbpf_num_possible_cpus();
+    if (filtered_fd < 0 || ncpu <= 0)
+        return;
+    __u64 *vals = calloc(ncpu, sizeof(__u64));
+    if (!vals)
+        return;
+    __u32 key = 0;
+    unsigned long long total = 0;
+    if (bpf_map_lookup_elem(filtered_fd, &key, vals) == 0)
+        for (int i = 0; i < ncpu; i++)
+            total += vals[i];
+    free(vals);
+    printf("filtered in kernel (host events): %llu\n", total);
+}
+
 /* ---------- container lifetime events ---------- */
 static int life_initial = 0;   /* 1 while announcing containers that already existed */
 
@@ -351,11 +405,13 @@ static void lifecycle_tick(void)
     for (int i = 0; i < ct_count; i++) {
         if (!ct_cache[i].announced) {
             ct_cache[i].announced = 1;
+            host_forget(ct_cache[i].cgid);
             emit_life("start", &ct_cache[i]);
         }
     }
     life_initial = 0;
     first = 0;
+    promote_hosts();
 }
 
 static int handle_event(void *ctx, void *data, size_t size)
@@ -368,8 +424,10 @@ static int handle_event(void *ctx, void *data, size_t size)
         return 0;
 
     const char *cid = container_of(e->cgroup_id);
-    if (only_containers && strcmp(cid, "host") == 0)
+    if (only_containers && strcmp(cid, "host") == 0) {
+        note_host(e->cgroup_id);
         return 0;
+    }
 
     record_stat(e, cid);
     write_json(e, cid);
@@ -460,6 +518,9 @@ int main(int argc, char **argv)
     }
 
     drops_fd = bpf_map__fd(skel->maps.drops);
+    host_fd = bpf_map__fd(skel->maps.host_cgroups);
+    filtered_fd = bpf_map__fd(skel->maps.filtered);
+    skel->bss->filter_enabled = only_containers ? 1 : 0;
     err = ringbuf_bpf__attach(skel);
     if (err) {
         fprintf(stderr, "failed to attach: %d\n", err);
@@ -491,6 +552,7 @@ int main(int argc, char **argv)
 
     print_stats();
     print_drops();
+    print_filtered();
     if (json_fp)
         fclose(json_fp);
 
