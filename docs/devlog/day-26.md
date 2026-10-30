@@ -1,0 +1,11 @@
+# Day 26 - Phase 1 attack-simulation demo
+- scripts/attack.c: harmless static program making ptrace seize/detach, mmap RW then mprotect RWX, a non-blocking connect to 1.1.1.1:4444, and a /bin/sh spawn
+- scripts/demo_attack.sh: starts an nginx container (with CAP_SYS_PTRACE), records with -c -j, runs the attack inside it, then applies scripts/detect_rules.py
+- detect_rules.py compares against data/normal_train.jsonl: shell spawn, ptrace, W+X memory, new binaries and new destinations are flagged
+- Demo produced 7 alert lines; verify_all.sh check 10 requires all four alert types
+- False-positive check: same rules on the validation recording gave zero alerts for zt-proxy and zt-backend
+- Learned: the syscall is traced on entry, so a blocked or failed ptrace is still visible
+- Learned: rules built from a small baseline are brittle; this is what the GNN should improve on
+- Known limits: rule-based and tuned to this attack; one container type; baseline is only 574 events
+- Problems: none recorded
+- Next: architecture docs and diagram

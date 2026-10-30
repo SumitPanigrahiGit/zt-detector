@@ -128,5 +128,14 @@ LM=$(sed -n 's/^latency.*p50=\([0-9]*\).*/\1/p' /tmp/zt_v_out.txt | head -1)
   && pass "latency measured (n=$LN p50=${LM}us p99=${LP}us)" \
   || fail "latency check (n='$LN' p99='$LP')"
 
+echo "== 10) attack demo (Day 26) =="
+./scripts/demo_attack.sh /tmp/zt_v10.jsonl > /tmp/zt_v10.txt 2>&1
+ok10=1
+for a in "ALERT ptrace" "ALERT wx-memory" "ALERT shell-spawn" "ALERT new-destination"; do
+  grep -q "$a" /tmp/zt_v10.txt || ok10=0
+done
+[ "$ok10" = 1 ] && pass "attack demo: ptrace, W+X, shell and new destination all flagged" \
+  || fail "attack demo missing alerts (see /tmp/zt_v10.txt)"
+
 [ "$FAIL" -eq 0 ] && echo "ALL VERIFIED" || { echo "SOME CHECKS FAILED"; exit 1; }
 
