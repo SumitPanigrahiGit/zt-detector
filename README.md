@@ -9,3 +9,7 @@ Daily logs are in `docs/devlog/`.
 - `./scripts/bench.sh`       measures overhead
 - `./scripts/record.sh NAME SECONDS`  records a normal-behaviour dataset
 - Loader flags: `-c` containers only, `-q` quiet, `-j FILE` JSON Lines output
+
+## Documentation
+- `docs/ARCHITECTURE.md`  components, data flow, limits
+- `docs/VERIFICATION.md`  what was tested and when

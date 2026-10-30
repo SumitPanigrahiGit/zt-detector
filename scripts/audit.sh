@@ -18,12 +18,12 @@ for f in bpf/hello.bpf.c bpf/execve.bpf.c bpf/common.h bpf/ringbuf.bpf.c src/loa
          scripts/build.sh scripts/smoke_test.sh scripts/bench.sh scripts/gen_normal.sh \
          scripts/proxy.conf scripts/summarize.py scripts/verify_all.sh scripts/record.sh \
          docs/bench-results.txt docs/week-01-summary.md docs/week-02-summary.md \
-         docs/week-03-summary.md data/normal_train.jsonl data/normal_val.jsonl; do
+         docs/week-03-summary.md data/normal_train.jsonl data/normal_val.jsonl docs/ARCHITECTURE.md; do
   chk "$f"
 done
 
 echo "== devlogs =="
-for d in $(seq -w 1 26); do
+for d in $(seq -w 1 27); do
   chk "docs/devlog/day-$d.md"
 done
 
