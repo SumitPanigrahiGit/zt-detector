@@ -86,5 +86,18 @@ stop_loader
 sudo grep '"type":"exit"' /tmp/zt_v6.jsonl | grep -q '"exit_code":3' \
   && pass "exit code 3 captured" || fail "no exit event with code 3"
 
+echo "== 7) container start/stop (Day 23) =="
+sudo rm -f /tmp/zt_v7.jsonl
+docker rm -f zt-life > /dev/null 2>&1
+start_loader -q -j /tmp/zt_v7.jsonl
+docker run -d --name zt-life alpine sleep 600 > /dev/null
+sleep 1
+docker rm -f zt-life > /dev/null
+sleep 1
+stop_loader
+sudo grep -E '"type":"container_start".*"name":"zt-life"' /tmp/zt_v7.jsonl | grep -q '"preexisting":0' && S1=1 || S1=0
+sudo grep -E '"type":"container_stop".*"name":"zt-life"' /tmp/zt_v7.jsonl | grep -q . && S2=1 || S2=0
+[ "$S1" = 1 ] && [ "$S2" = 1 ] && pass "container start and stop recorded with name" || fail "start=$S1 stop=$S2"
+
 [ "$FAIL" -eq 0 ] && echo "ALL VERIFIED" || { echo "SOME CHECKS FAILED"; exit 1; }
 

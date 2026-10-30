@@ -23,7 +23,7 @@ for f in bpf/hello.bpf.c bpf/execve.bpf.c bpf/common.h bpf/ringbuf.bpf.c src/loa
 done
 
 echo "== devlogs =="
-for d in 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21; do
+for d in $(seq -w 1 23); do
   chk "docs/devlog/day-$d.md"
 done
 

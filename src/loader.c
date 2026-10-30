@@ -21,7 +21,7 @@ static void on_signal(int sig) { (void)sig; stop = 1; }
 
 /* ---------- cgroup ID -> container ID cache ---------- */
 #define MAX_CT 256
-struct ct_entry { unsigned long long cgid; char id[13]; char name[64]; char path[512]; };
+struct ct_entry { unsigned long long cgid; char id[13]; char name[64]; char path[512]; int announced; };
 static struct ct_entry ct_cache[MAX_CT];
 static int ct_count = 0;
 static long long last_scan = 0;   /* ms, CLOCK_MONOTONIC */
@@ -92,6 +92,7 @@ static void scan_dir(const char *base)
             continue;
 
         ct_cache[ct_count].cgid = st.st_ino;
+        ct_cache[ct_count].announced = 0;
         snprintf(ct_cache[ct_count].path, sizeof(ct_cache[ct_count].path), "%s", path);
         memcpy(ct_cache[ct_count].id, hex, 12);
         ct_cache[ct_count].id[12] = '\0';
@@ -102,6 +103,8 @@ static void scan_dir(const char *base)
 }
 
 /* Drop entries whose cgroup directory was removed or whose inode changed. */
+static void emit_life(const char *kind, const struct ct_entry *c);
+
 static void prune_cache(void)
 {
     int j = 0;
@@ -110,6 +113,8 @@ static void prune_cache(void)
         if (stat(ct_cache[i].path, &st) == 0 &&
             (unsigned long long)st.st_ino == ct_cache[i].cgid)
             ct_cache[j++] = ct_cache[i];
+        else if (ct_cache[i].announced)
+            emit_life("stop", &ct_cache[i]);
     }
     ct_count = j;
 }
@@ -305,6 +310,54 @@ static void write_json(const struct event *e, const char *cid)
     fputs("}\n", json_fp);
 }
 
+/* ---------- container lifetime events ---------- */
+static int life_initial = 0;   /* 1 while announcing containers that already existed */
+
+static void emit_life(const char *kind, const struct ct_entry *c)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);   /* same time base as bpf_ktime_get_ns() */
+    unsigned long long ns = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+
+    if (json_fp) {
+        fprintf(json_fp, "{\"ts_ns\":%llu,\"type\":\"container_%s\",\"container\":", ns, kind);
+        json_str(json_fp, c->id);
+        fputs(",\"name\":", json_fp);
+        json_str(json_fp, c->name);
+        fprintf(json_fp, ",\"cgroup_id\":%llu,\"preexisting\":%d}\n", c->cgid, life_initial);
+    }
+    if (!quiet)
+        printf("%-8s %-8s %-8s %-6s %-13s %-16s %-16s %s\n", "LIFE", "-", "-", "-",
+               c->id, c->name, "-", kind);
+}
+
+/* Called from the poll loop; does real work at most every 100 ms. */
+static void lifecycle_tick(void)
+{
+    static long long last = -1000;
+    static int first = 1;
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    long long now = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000;
+    if (now - last < 100)
+        return;
+    last = now;
+
+    prune_cache();                               /* emits "stop" for vanished containers */
+    scan_dir("/sys/fs/cgroup/system.slice");
+    scan_dir("/sys/fs/cgroup/docker");
+
+    life_initial = first;
+    for (int i = 0; i < ct_count; i++) {
+        if (!ct_cache[i].announced) {
+            ct_cache[i].announced = 1;
+            emit_life("start", &ct_cache[i]);
+        }
+    }
+    life_initial = 0;
+    first = 0;
+}
+
 static int handle_event(void *ctx, void *data, size_t size)
 {
     const struct event *e = data;
@@ -424,6 +477,7 @@ int main(int argc, char **argv)
            "TYPE", "PID", "PPID", "UID", "CONTAINER", "NAME", "COMM", "DETAIL");
 
     while (!stop) {
+        lifecycle_tick();
         err = ring_buffer__poll(rb, 100);
         if (err == -EINTR) {
             err = 0;
