@@ -21,7 +21,7 @@ BASE=$(run_load)
 echo "workload time: ${BASE}s"
 
 sudo sysctl -qw kernel.bpf_stats_enabled=1
-sudo ./build/loader -q > /dev/null 2>&1 &
+sudo ./build/loader -q $BENCH_FLAGS > /dev/null 2>&1 &
 sleep 2
 LPID=$(pgrep -nx loader)
 if [ -z "$LPID" ]; then
