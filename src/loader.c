@@ -310,6 +310,39 @@ static void write_json(const struct event *e, const char *cid)
     fputs("}\n", json_fp);
 }
 
+/* ---------- kernel -> user-space latency ---------- */
+#define MAX_LAT 200000
+static unsigned int lat_us[MAX_LAT];
+static size_t lat_n = 0;
+
+static int cmp_u32(const void *a, const void *b)
+{
+    unsigned int x = *(const unsigned int *)a, y = *(const unsigned int *)b;
+    return (x > y) - (x < y);
+}
+
+static void record_latency(unsigned long long kernel_ts_ns)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    unsigned long long now = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+    if (now < kernel_ts_ns || lat_n >= MAX_LAT)
+        return;
+    unsigned long long us = (now - kernel_ts_ns) / 1000;
+    lat_us[lat_n++] = us > 0xffffffffULL ? 0xffffffffU : (unsigned int)us;
+}
+
+static void print_latency(void)
+{
+    if (lat_n == 0) {
+        printf("latency kernel->user (us): n=0\n");
+        return;
+    }
+    qsort(lat_us, lat_n, sizeof(lat_us[0]), cmp_u32);
+    printf("latency kernel->user (us): n=%zu p50=%u p99=%u max=%u\n",
+           lat_n, lat_us[lat_n / 2], lat_us[(lat_n * 99) / 100], lat_us[lat_n - 1]);
+}
+
 /* ---------- in-kernel host filter ---------- */
 static int host_fd = -1;
 static int filtered_fd = -1;
@@ -423,6 +456,7 @@ static int handle_event(void *ctx, void *data, size_t size)
     if (size < sizeof(*e))
         return 0;
 
+    record_latency(e->ts_ns);   /* measure before any other work */
     const char *cid = container_of(e->cgroup_id);
     if (only_containers && strcmp(cid, "host") == 0) {
         note_host(e->cgroup_id);
@@ -553,6 +587,7 @@ int main(int argc, char **argv)
     print_stats();
     print_drops();
     print_filtered();
+    print_latency();
     if (json_fp)
         fclose(json_fp);
 

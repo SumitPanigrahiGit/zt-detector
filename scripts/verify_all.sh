@@ -116,5 +116,17 @@ F8=$(grep "filtered in kernel" /tmp/zt_v_out.txt | awk '{print $NF}')
   && pass "host events filtered in kernel (filtered=$F8, dropped=$D8)" \
   || fail "filter not effective (filtered='$F8', dropped='$D8')"
 
+echo "== 9) latency (Day 25) =="
+start_loader -q
+for i in $(seq 200); do /bin/true; sleep 0.01; done
+sleep 1
+stop_loader
+LN=$(sed -n 's/^latency.*n=\([0-9]*\).*/\1/p' /tmp/zt_v_out.txt | head -1)
+LP=$(sed -n 's/^latency.*p99=\([0-9]*\).*/\1/p' /tmp/zt_v_out.txt | head -1)
+LM=$(sed -n 's/^latency.*p50=\([0-9]*\).*/\1/p' /tmp/zt_v_out.txt | head -1)
+[ "${LN:-0}" -gt 100 ] && [ "${LP:-999999999}" -lt 100000 ] \
+  && pass "latency measured (n=$LN p50=${LM}us p99=${LP}us)" \
+  || fail "latency check (n='$LN' p99='$LP')"
+
 [ "$FAIL" -eq 0 ] && echo "ALL VERIFIED" || { echo "SOME CHECKS FAILED"; exit 1; }
 
