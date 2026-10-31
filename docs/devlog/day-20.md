@@ -7,3 +7,5 @@
 - Learned: anomaly detectors train on normal data only; train and validation are separate recordings
 - Problems: health-check wget to localhost was refused (IPv6 ::1 vs IPv4-only nginx); switched to 127.0.0.1 and re-recorded so the data is clean
 - Next: tag v0.3, Week 3 summary, LinkedIn post
+- Day 30: re-recorded train (600 s) and val (200 s); the original files covered only about 120 s, not the 300 s first stated
+- Day 30: re-recorded train (600 s) and val (200 s); the original files covered only about 120 s, not the 300 s first stated

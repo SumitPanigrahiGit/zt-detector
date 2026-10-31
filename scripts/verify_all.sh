@@ -137,5 +137,10 @@ done
 [ "$ok10" = 1 ] && pass "attack demo: ptrace, W+X, shell and new destination all flagged" \
   || fail "attack demo missing alerts (see /tmp/zt_v10.txt)"
 
+echo "== 11) graph encoding (Day 30) =="
+.venv/bin/python ml/encode.py > /tmp/zt_v11.txt 2>&1
+grep -q "ENCODE OK" /tmp/zt_v11.txt && pass "graphs encoded, structural checks passed" \
+  || fail "encoding failed (see /tmp/zt_v11.txt)"
+
 [ "$FAIL" -eq 0 ] && echo "ALL VERIFIED" || { echo "SOME CHECKS FAILED"; exit 1; }
 
