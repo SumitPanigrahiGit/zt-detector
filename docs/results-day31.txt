@@ -1,0 +1,16 @@
+graphs: train=62 val=22 attack=1 feature-dim=26
+epoch   1  loss 0.20432
+epoch  50  loss 0.00286
+epoch 100  loss 0.00171
+epoch 150  loss 0.00133
+epoch 200  loss 0.00106
+epoch 250  loss 0.00084
+epoch 300  loss 0.00069
+threshold (1.5 x max train window score): 0.0499
+train   windows=62  max-node-error: min=0.0000 median=0.0000 max=0.0333  flagged=0 (0.0%)
+val     windows=22  max-node-error: min=0.0000 median=0.0000 max=0.0333  flagged=0 (0.0%)
+attack  windows=1   max-node-error: min=0.2008 median=0.2008 max=0.2008  flagged=1 (100.0%)
+attack window top node errors: [0.2008, 0.1036, 0.0676]
+loss 0.20432 -> 0.00069
+val false positives: 0 / 22 windows; attack windows flagged: 1 / 1
+TRAIN OK

@@ -6,3 +6,4 @@ data/
 *.jsonl
 .venv/
 .venv/
+data/model.pt
