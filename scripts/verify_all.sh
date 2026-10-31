@@ -142,5 +142,10 @@ echo "== 11) graph encoding (Day 30) =="
 grep -q "ENCODE OK" /tmp/zt_v11.txt && pass "graphs encoded, structural checks passed" \
   || fail "encoding failed (see /tmp/zt_v11.txt)"
 
+echo "== 12) model training (Day 31) =="
+.venv/bin/python ml/train.py > /tmp/zt_v12.txt 2>&1
+grep -q "TRAIN OK" /tmp/zt_v12.txt && pass "model trained, loss halved" \
+  || fail "training failed (see /tmp/zt_v12.txt)"
+
 [ "$FAIL" -eq 0 ] && echo "ALL VERIFIED" || { echo "SOME CHECKS FAILED"; exit 1; }
 
