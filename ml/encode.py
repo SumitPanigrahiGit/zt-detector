@@ -35,7 +35,11 @@ def encode(g, vocab):
     nodes = list(g.nodes)
     idx = {n: i for i, n in enumerate(nodes)}
     V = len(vocab) + 1
-    x = torch.zeros(len(nodes), V + 6)
+    # window-level rate features (same value on every node of the window)
+    win_exec = sum(1 for _, _, d in g.edges(data=True) if d['rel'] == 'spawned')
+    win_procs = sum(1 for n in nodes if g.nodes[n]['binary'] != 'NET')
+    win_conn = sum(1 for _, _, d in g.edges(data=True) if d['rel'] == 'connected')
+    x = torch.zeros(len(nodes), V + 9)
     for n, i in idx.items():
         a = g.nodes[n]
         x[i, vocab.get(key_of(a, n), 0)] = 1.0                 # one-hot program / port
@@ -45,6 +49,9 @@ def encode(g, vocab):
         x[i, V + 3] = math.log1p(a["n_mprotect"])
         x[i, V + 4] = math.log1p(a["n_ptrace"])
         x[i, V + 5] = 1.0 if a["wx"] > 0 else 0.0
+        x[i, V + 6] = math.log1p(win_exec)
+        x[i, V + 7] = math.log1p(win_procs)
+        x[i, V + 8] = math.log1p(win_conn)
     # collapse repeated edges into one weighted edge per (src, dst, relation)
     counts = collections.Counter((idx[u], idx[v], REL[d["rel"]]) for u, v, d in g.edges(data=True))
     src = [k[0] for k in counts]
@@ -79,11 +86,11 @@ if __name__ == "__main__":
         print("%-7s graphs=%-3d nodes=%-5d edges=%-5d unknown-nodes=%-3d (%.1f%%) wx-nodes=%d"
               % (k, len(ds), n, e, unk, 100.0 * unk / max(n, 1), wx))
         for d in ds:                                   # structural sanity checks
-            assert d.x.shape[1] == len(vocab) + 7
+            assert d.x.shape[1] == len(vocab) + 10
             assert d.edge_index.shape[1] == d.edge_type.shape[0] == d.edge_weight.shape[0]
             assert d.edge_index.numel() == 0 or int(d.edge_index.max()) < d.num_nodes
     os.makedirs("data", exist_ok=True)
     torch.save({"vocab": vocab, **data}, "data/graphs.pt")
     json.dump(vocab, open("data/vocab.json", "w"), indent=1)
-    print("vocab size:", len(vocab), "feature dim:", len(vocab) + 7)
+    print("vocab size:", len(vocab), "feature dim:", len(vocab) + 10)
     print("ENCODE OK")

@@ -1,0 +1,12 @@
+train=62 val=26 attack windows: {'beacon': 2, 'scan': 1, 'burst': 2, 'wx': 1}
+seed 0 thr=0.0503 val-FP=0/26  beacon 2/2  scan 1/1  burst 2/2  wx 1/1
+seed 1 thr=0.0560 val-FP=0/26  beacon 2/2  scan 1/1  burst 1/2  wx 1/1
+seed 2 thr=0.0595 val-FP=0/26  beacon 2/2  scan 1/1  burst 1/2  wx 1/1
+
+SUMMARY over 3 seeds
+validation false-positive rate: mean 0.0%
+beacon  windows flagged: mean 100%
+scan    windows flagged: mean 100%
+burst   windows flagged: mean 67%
+wx      windows flagged: mean 100%
+EVAL DONE
