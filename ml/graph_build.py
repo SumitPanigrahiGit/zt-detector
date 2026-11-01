@@ -69,7 +69,12 @@ def windows(events, size=WINDOW_NS):
     t0 = events[0]["ts_ns"]
     for e in events:
         buckets[(e["ts_ns"] - t0) // size].append(e)
-    return [build_graph(buckets[k]) for k in sorted(buckets)]
+    out = []
+    for i, k in enumerate(sorted(buckets)):
+        gr = build_graph(buckets[k])
+        gr.graph['startup'] = 1 if i == 0 else 0   # first window of the container's recording
+        out.append(gr)
+    return out
 
 
 if __name__ == "__main__":

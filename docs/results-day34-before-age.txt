@@ -1,0 +1,14 @@
+train=93 val=32 attack windows: {'beacon': 10, 'scan': 5, 'burst': 10, 'wx': 5}
+seed 0 thr=0.0463 val-FP=0/32  beacon 10/10  scan 5/5  burst 10/10  wx 5/5
+seed 1 thr=0.0534 val-FP=0/32  beacon 10/10  scan 5/5  burst 0/10  wx 5/5
+seed 2 thr=0.0526 val-FP=0/32  beacon 10/10  scan 5/5  burst 0/10  wx 5/5
+seed 3 thr=0.0501 val-FP=0/32  beacon 10/10  scan 5/5  burst 10/10  wx 5/5
+seed 4 thr=0.0516 val-FP=0/32  beacon 10/10  scan 5/5  burst 0/10  wx 5/5
+
+SUMMARY (counts over 5 seeds)
+validation windows flagged: 0 / 160
+beacon  attack windows flagged: 50 / 50
+scan    attack windows flagged: 25 / 25
+burst   attack windows flagged: 20 / 50
+wx      attack windows flagged: 25 / 25
+EVAL2 DONE
