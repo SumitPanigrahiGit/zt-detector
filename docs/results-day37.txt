@@ -1,0 +1,26 @@
+nginx train=93 val=32 | redis train=57 val=28
+seed 0 nginx-only done thr=0.0480
+seed 0 both done thr=0.0470
+seed 1 nginx-only done thr=0.0505
+seed 1 both done thr=0.0408
+seed 2 nginx-only done thr=0.0462
+seed 2 both done thr=0.0532
+seed 3 nginx-only done thr=0.0462
+seed 3 both done thr=0.0425
+seed 4 nginx-only done thr=0.0513
+seed 4 both done thr=0.0398
+
+SUMMARY (counts over 5 seeds)
+nginx-only nginx val    flagged: 0 / 160
+nginx-only redis val    flagged: 140 / 140
+nginx-only atk beacon   flagged: 65 / 65
+nginx-only atk scan     flagged: 35 / 35
+nginx-only atk burst    flagged: 75 / 80
+nginx-only atk wx       flagged: 35 / 35
+both       nginx val    flagged: 0 / 160
+both       redis val    flagged: 1 / 140
+both       atk beacon   flagged: 65 / 65
+both       atk scan     flagged: 35 / 35
+both       atk burst    flagged: 59 / 80
+both       atk wx       flagged: 35 / 35
+EVALWS DONE
