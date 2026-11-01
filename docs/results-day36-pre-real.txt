@@ -1,0 +1,12 @@
+mode=real train=93 val=32 pre_norm=18 pre_burst=10
+seed 0  val 0/32  pre_norm 0/18  pre_burst 10/10
+seed 1  val 0/32  pre_norm 0/18  pre_burst 5/10
+seed 2  val 0/32  pre_norm 0/18  pre_burst 5/10
+seed 3  val 0/32  pre_norm 0/18  pre_burst 10/10
+seed 4  val 0/32  pre_norm 0/18  pre_burst 10/10
+
+SUMMARY (counts over 5 seeds)
+validation windows flagged (false positives): 0 / 160
+already-running NORMAL windows flagged (false positives): 0 / 90
+already-running BURST windows flagged (detections): 40 / 50
+EVALPRE DONE

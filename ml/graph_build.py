@@ -3,13 +3,23 @@ import json, sys, os, collections
 import networkx as nx
 
 WINDOW_NS = 10 * 10**9   # 10 s snapshots
+AGE_MODE = os.environ.get("ZT_AGE", "real")   # "real" or "proxy" (old behaviour)
+
+
+class Events(list):
+    """List of events plus the container's start info from its container_start record."""
+    start = None
+    pre = False
 
 
 def load(path, name=None):
-    events = []
+    events = Events()
     for line in open(path):
         e = json.loads(line)
         if e["type"].startswith("container_"):
+            if e["type"] == "container_start" and e.get("name") == name and events.start is None:
+                events.start = e["ts_ns"]
+                events.pre = bool(e.get("preexisting", 0))
             continue
         if name and e.get("name") != name:
             continue
@@ -66,13 +76,19 @@ def windows(events, size=WINDOW_NS):
     buckets = collections.defaultdict(list)
     if not events:
         return []
-    t0 = events[0]["ts_ns"]
+    start = getattr(events, "start", None)
+    pre = getattr(events, "pre", False)
+    anchored = AGE_MODE == "real" and start is not None and not pre
+    t0 = start if anchored else events[0]["ts_ns"]
     for e in events:
-        buckets[(e["ts_ns"] - t0) // size].append(e)
+        buckets[max(0, (e["ts_ns"] - t0) // size)].append(e)
     out = []
     for i, k in enumerate(sorted(buckets)):
         gr = build_graph(buckets[k])
-        gr.graph['startup'] = 1 if i == 0 else 0   # first window of the container's recording
+        if AGE_MODE == "real" and start is not None:
+            gr.graph['startup'] = 1 if (anchored and k == 0) else 0
+        else:
+            gr.graph['startup'] = 1 if i == 0 else 0   # old proxy; also the fallback without a container_start event
         out.append(gr)
     return out
 
