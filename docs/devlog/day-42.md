@@ -10,5 +10,5 @@
     beacon            rule A (1.5 x max): flagged 72 / 72   rule B (held-out mean+3sd): flagged 72 / 72
     EVALTHR DONE
 - Caveats: one simple workload; 2 learning runs and 3 seeds are not independent; rule B uses few held-out windows, so it is noisy; k=3 was fixed before testing, not tuned
-- Problems: hypothesis 1 not supported (rule A and B gave identical counts, possibly because rule B fell back to rule A with few held-out windows); jitter false positives fell mainly because the learning data was jittered; a garbled paste damaged evaluate_thr.py during creation
+- Problems: hypothesis 1 not supported (rule A and B gave identical counts, checked: 4 held-out steady windows per run, so the fallback did not fire and rule B really ran; it matched rule A, so no difference was observed (4 windows is a noisy estimate, and the split mixes both containers)); jitter false positives fell mainly because the learning data was jittered; a garbled paste damaged evaluate_thr.py during creation
 - Next: fold the threshold rule and learning report into the loader/controller design
