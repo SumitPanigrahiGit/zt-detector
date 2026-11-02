@@ -16,3 +16,4 @@
 - Caveats: two workloads, one machine, non-independent seeds; attack recordings come from the nginx image only; redis baseline is small
 - Problems: none recorded
 - Next: loader reads the image name; define behaviour for images with no baseline
+- Verified: steady-state spawns per window are 3 for nginx and 10 for redis, which explains why the combined model lost burst detection
