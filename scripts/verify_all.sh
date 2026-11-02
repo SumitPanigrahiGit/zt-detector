@@ -147,5 +147,20 @@ echo "== 12) model training (Day 31) =="
 grep -q "TRAIN OK" /tmp/zt_v12.txt && pass "model trained, loss halved" \
   || fail "training failed (see /tmp/zt_v12.txt)"
 
+echo "== 13) image in events (Day 39) =="
+sudo rm -f /tmp/zt_v13.jsonl
+docker rm -f zt-img > /dev/null 2>&1
+start_loader -q -j /tmp/zt_v13.jsonl
+docker run -d --name zt-img nginx:alpine > /dev/null
+sleep 1
+docker exec zt-img true
+sleep 1
+docker rm -f zt-img > /dev/null
+sleep 1
+stop_loader
+sudo grep '"type":"container_start"' /tmp/zt_v13.jsonl | grep -q '"image":"nginx:alpine"' \
+  && sudo grep '"type":"exec"' /tmp/zt_v13.jsonl | grep -q '"image":"nginx:alpine"' \
+  && pass "image recorded in lifecycle and exec events" || fail "image missing"
+
 [ "$FAIL" -eq 0 ] && echo "ALL VERIFIED" || { echo "SOME CHECKS FAILED"; exit 1; }
 

@@ -1,0 +1,11 @@
+# Day 39 - Image in every event, unmonitored state
+- Loader reads Config.Image from config.v2.json (skips the sha256 id) and writes "image" into every container event and lifecycle record
+- graph_build carries the image into each window graph; ml/evaluate_img.py trains one model per image and routes each window by its image
+- An image with no model is counted as "unmonitored", not as an attack (python:alpine, 2 recordings, scripts/record_py.sh)
+- Legacy recordings predate the image field, so the evaluator falls back to the old container-name map for them
+- Added check 13 to verify_all.sh
+- Hypothesis written before testing: unmonitored python windows are all unmonitored and none flagged; nginx and redis behave as on Day 38
+- Results (copied from docs/results-day39.txt):
+- Caveats: three workloads, one machine, non-independent seeds; attacks only on the nginx image; "unmonitored" means no alarm, so an attack on an unmonitored image is not detected
+- Problems: none recorded
+- Next: decide how an unmonitored image gets a baseline (learning mode) and what to alert on meanwhile

@@ -10,6 +10,7 @@ class Events(list):
     """List of events plus the container's start info from its container_start record."""
     start = None
     pre = False
+    image = None
 
 
 def load(path, name=None):
@@ -20,6 +21,7 @@ def load(path, name=None):
             if e["type"] == "container_start" and e.get("name") == name and events.start is None:
                 events.start = e["ts_ns"]
                 events.pre = bool(e.get("preexisting", 0))
+                events.image = e.get("image")
             continue
         if name and e.get("name") != name:
             continue
@@ -89,6 +91,7 @@ def windows(events, size=WINDOW_NS):
             gr.graph['startup'] = 1 if (anchored and k == 0) else 0
         else:
             gr.graph['startup'] = 1 if i == 0 else 0   # old proxy; also the fallback without a container_start event
+        gr.graph['image'] = getattr(events, 'image', None)
         out.append(gr)
     return out
 

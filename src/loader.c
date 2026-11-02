@@ -21,7 +21,7 @@ static void on_signal(int sig) { (void)sig; stop = 1; }
 
 /* ---------- cgroup ID -> container ID cache ---------- */
 #define MAX_CT 256
-struct ct_entry { unsigned long long cgid; char id[13]; char name[64]; char path[512]; int announced; };
+struct ct_entry { unsigned long long cgid; char id[13]; char name[64]; char path[512]; int announced; char image[64]; };
 static struct ct_entry ct_cache[MAX_CT];
 static int ct_count = 0;
 static long long last_scan = 0;   /* ms, CLOCK_MONOTONIC */
@@ -58,6 +58,33 @@ static void read_name(const char *hex, char *out, size_t outsz)
     while (*q && *q != '"' && i < outsz - 1)
         out[i++] = *q++;
     out[i] = '\0';
+}
+
+static void read_image(const char *hex, char *out, size_t outsz)
+{
+    static char buf[32768];
+    char path[256];
+    snprintf(path, sizeof(path),
+             "/var/lib/docker/containers/%.64s/config.v2.json", hex);
+    snprintf(out, outsz, "?");
+    FILE *f = fopen(path, "r");
+    if (!f)
+        return;
+    size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+    fclose(f);
+    buf[n] = '\0';
+    char *q = buf;
+    /* the file has "Image" twice: the name (use this) and a sha256 id (skip) */
+    while ((q = strstr(q, "\"Image\":\"")) != NULL) {
+        q += 9;
+        if (strncmp(q, "sha256:", 7) != 0) {
+            size_t i = 0;
+            while (*q && *q != '"' && i < outsz - 1)
+                out[i++] = *q++;
+            out[i] = '\0';
+            return;
+        }
+    }
 }
 
 static void scan_dir(const char *base)
@@ -97,6 +124,7 @@ static void scan_dir(const char *base)
         memcpy(ct_cache[ct_count].id, hex, 12);
         ct_cache[ct_count].id[12] = '\0';
         read_name(hex, ct_cache[ct_count].name, sizeof(ct_cache[ct_count].name));
+        read_image(hex, ct_cache[ct_count].image, sizeof(ct_cache[ct_count].image));
         ct_count++;
     }
     closedir(d);
@@ -146,6 +174,14 @@ static const char *container_name(unsigned long long cgid)
     for (int i = 0; i < ct_count; i++)
         if (ct_cache[i].cgid == cgid)
             return ct_cache[i].name;
+    return "-";
+}
+
+static const char *container_image(unsigned long long cgid)
+{
+    for (int i = 0; i < ct_count; i++)
+        if (ct_cache[i].cgid == cgid)
+            return ct_cache[i].image;
     return "-";
 }
 
@@ -273,6 +309,8 @@ static void write_json(const struct event *e, const char *cid)
     json_str(json_fp, cid);
     fputs(",\"name\":", json_fp);
     json_str(json_fp, container_name(e->cgroup_id));
+    fputs(",\"image\":", json_fp);
+    json_str(json_fp, container_image(e->cgroup_id));
     fputs(",\"comm\":", json_fp);
     json_str(json_fp, e->comm);
 
@@ -411,6 +449,8 @@ static void emit_life(const char *kind, const struct ct_entry *c)
         json_str(json_fp, c->id);
         fputs(",\"name\":", json_fp);
         json_str(json_fp, c->name);
+        fputs(",\"image\":", json_fp);
+        json_str(json_fp, c->image);
         fprintf(json_fp, ",\"cgroup_id\":%llu,\"preexisting\":%d}\n", c->cgid, life_initial);
     }
     if (!quiet)
