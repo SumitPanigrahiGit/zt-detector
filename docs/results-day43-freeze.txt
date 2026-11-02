@@ -1,0 +1,5 @@
+time from request until the kernel reports frozen=1 (ms, 20 runs each)
+docker CLI     median 55.45  p95 76.88  max 78.67
+docker API     median 25.70  p95 33.35  max 35.63
+cgroup.freeze  median 0.19  p95 0.33  max 0.35
+FREEZE DONE

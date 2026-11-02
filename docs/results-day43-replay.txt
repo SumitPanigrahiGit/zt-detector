@@ -1,0 +1,7 @@
+learn runs [20, 20] normal sequences 4 attack recordings {'beacon': 6, 'burst': 6}
+
+SUMMARY (rule A thresholds, jittered learning L=12; counts over 2 learning runs x 3 seeds)
+normal windows: 132   flagged windows (act on 1): 0   alerts needing 2 in a row: 0
+beacon  recordings detected  act-on-1: 36 / 36   2-in-a-row: 36 / 36
+burst   recordings detected  act-on-1: 36 / 36   2-in-a-row: 27 / 36
+REPLAY DONE
