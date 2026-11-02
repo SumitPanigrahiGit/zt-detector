@@ -52,9 +52,16 @@ for L in LS:
                     loss = ((model(b.x, b.edge_index, b.edge_type) - b.x) ** 2).mean()
                     loss.backward()
                     opt.step()
-            thr = float(np.percentile([s[0] for s in window_scores(model, tr)], 99)) * 1.5
+            sc = [s[0] for s in window_scores(model, tr)]
+            st = [bool(d.x[0, -1] > 0.5) for d in tr]
+            steady = [a for a, k in zip(sc, st) if not k] or sc
+            start = [a for a, k in zip(sc, st) if k] or sc
+            thr_steady = max(steady) * 1.5
+            thr_start = max(start) * 1.5
             for name, data in [("val (false positives)", val_g)] + [("atk " + k, v) for k, v in atk_g.items()]:
-                f = sum(s[0] > thr for s in window_scores(model, enc(data)))
+                ed = enc(data)
+                f = sum(a[0] > (thr_start if bool(d.x[0, -1] > 0.5) else thr_steady)
+                        for a, d in zip(window_scores(model, ed), ed))
                 key = (L, name)
                 a, b = res.get(key, (0, 0))
                 res[key] = (a + f, b + len(data))

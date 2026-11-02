@@ -1,0 +1,13 @@
+learn runs: [21, 21, 21] val windows: 22 attack windows: {'beacon': 12, 'burst': 12}
+
+SUMMARY (counts over learning runs x 3 seeds; L = learning windows of 10 s)
+L=6   val (false positives)  flagged: 0 / 198
+L=6   atk beacon             flagged: 108 / 108
+L=6   atk burst              flagged: 108 / 108
+L=12  val (false positives)  flagged: 0 / 198
+L=12  atk beacon             flagged: 108 / 108
+L=12  atk burst              flagged: 99 / 108
+L=18  val (false positives)  flagged: 0 / 198
+L=18  atk beacon             flagged: 108 / 108
+L=18  atk burst              flagged: 108 / 108
+EVALLEARN DONE
