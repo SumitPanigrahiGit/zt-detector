@@ -1,16 +1,10 @@
-Traceback (most recent call last):
-  File "/home/sumit/zt-detector/ml/evaluate_poison.py", line 23, in <module>
-    jit = [g for f in sorted(glob.glob("data/pyj_*.jsonl")) for g in rw(f, NORM)]
-                                                                     ^^^^^^^^^^^
-  File "/home/sumit/zt-detector/ml/evaluate_poison.py", line 16, in rw
-    ws = [g for g in windows(load(f, n)) if g.number_of_nodes() > 0]
-                             ^^^^^^^^^^
-  File "/home/sumit/zt-detector/ml/graph_build.py", line 19, in load
-    e = json.loads(line)
-        ^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
-    return _default_decoder.decode(s)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/json/decoder.py", line 340, in decode
-    raise JSONDecodeError("Extra data", s, end)
-json.decoder.JSONDecodeError: Extra data: line 1 column 4 (char 3)
+clean runs [21, 21, 21] poisoned runs [28, 28] jitter windows 22 regular val windows 22 beacon windows 12
+
+SUMMARY (L=12 learning windows; counts over runs x 3 seeds)
+clean-trained     regular val  flagged: 0 / 198
+clean-trained     jitter val   flagged: 102 / 198
+clean-trained     beacon       flagged: 108 / 108
+poisoned-trained  regular val  flagged: 0 / 132
+poisoned-trained  jitter val   flagged: 0 / 132
+poisoned-trained  beacon       flagged: 0 / 72
+EVALPOISON DONE

@@ -4,5 +4,5 @@
 - Hypotheses written before testing: jitter gives false positives on a perfectly regular baseline; a beacon present during learning is absorbed and a later beacon is missed
 - Results (copied from docs/results-day41.txt):
 - Caveats: one simple workload; runs, seeds and windows are not independent; one poisoning pattern; two poisoned recordings
-- Problems: pasted scripts were garbled, so the evaluator was recreated in parts; the first devlog was committed before any results existed
+- Problems: pasted scripts were garbled; pyj_1 was corrupted by an interrupted first recording (mixed two runs) and was re-recorded; the first devlog was committed before any results existed
 - Next: decide mitigations from these results
