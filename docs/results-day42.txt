@@ -1,0 +1,6 @@
+jitter learn runs [20, 20] fresh jitter windows 22 beacon windows 12
+
+SUMMARY (L=12, jittered learning, counts over runs x 3 seeds)
+fresh jitter val  rule A (1.5 x max): flagged 24 / 132   rule B (held-out mean+3sd): flagged 24 / 132
+beacon            rule A (1.5 x max): flagged 72 / 72   rule B (held-out mean+3sd): flagged 72 / 72
+EVALTHR DONE
