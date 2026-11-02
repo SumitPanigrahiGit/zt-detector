@@ -1,0 +1,16 @@
+seed 0 done
+seed 1 done
+seed 2 done
+seed 3 done
+seed 4 done
+
+SUMMARY (counts over 5 seeds)
+nginx model: nginx val                     flagged: 0 / 160
+nginx model: atk beacon                    flagged: 65 / 65
+nginx model: atk scan                      flagged: 35 / 35
+nginx model: atk burst                     flagged: 75 / 80
+nginx model: atk wx                        flagged: 35 / 35
+nginx model: redis val (wrong service)     flagged: 140 / 140
+redis model: redis val                     flagged: 0 / 140
+redis model: nginx val (wrong service)     flagged: 158 / 160
+EVALPS DONE
