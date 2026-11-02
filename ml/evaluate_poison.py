@@ -29,10 +29,10 @@ if len(poison) < 2 or len(jit) < 8 or len(beacon) < 5:
     raise SystemExit("TOO LITTLE DATA (re-record)")
 
 L = 12
-res = {}
+TESTS = {"regular val": reg, "jitter val": jit, "beacon": beacon}
 
 
-def fit_score(train_g, seed, tests):
+def fit_score(train_g, seed):
     vocab = build_vocab(train_g)
     enc = lambda gl: [encode(g, vocab) for g in gl]
     tr = enc(train_g)
@@ -54,28 +54,25 @@ def fit_score(train_g, seed, tests):
     start = [a for a, k in zip(sc, st) if k] or sc
     ts, tt = max(steady) * 1.5, max(start) * 1.5
     out = {}
-    for name, data in tests.items():
+    for name, data in TESTS.items():
         ed = enc(data)
         out[name] = sum(a[0] > (tt if bool(d.x[0, -1] > 0.5) else ts)
                         for a, d in zip(window_scores(model, ed), ed))
     return out
 
 
-for seed in range(3):
-    for i, run in enumerate(clean):
-        r = fit_score(run[:L], seed, {"jitter val": jit, "regular val": reg, "beacon": beacon})
-        for k, v in r.items():
-            res[("clean-trained", k)] = (res.get(("clean-trained", k), (0, 0))[0] + v,
-                                         res.get(("clean-trained", k), (0, 0))[1] + len({"jitter val": jit, "regular val": reg, "beacon": beacon}[k]))
-    for i, run in enumerate(poison):
-        r = fit_score(run[:L], seed, {"jitter val": jit, "regular val": reg, "beacon": beacon})
-        for k, v in r.items():
-            res[("poisoned-trained", k)] = (res.get(("poisoned-trained", k), (0, 0))[0] + v,
-                                            res.get(("poisoned-trained", k), (0, 0))[1] + len({"jitter val": jit, "regular val": reg, "beacon": beacon}[k]))
+res = {}
+for setup, runs in (("clean-trained", clean), ("poisoned-trained", poison)):
+    for seed in range(3):
+        for run in runs:
+            r = fit_score(run[:L], seed)
+            for k, v in r.items():
+                a, b = res.get((setup, k), (0, 0))
+                res[(setup, k)] = (a + v, b + len(TESTS[k]))
 
 print("\nSUMMARY (L=12 learning windows; counts over runs x 3 seeds)")
 for setup in ("clean-trained", "poisoned-trained"):
-    for k in ("regular val", "jitter val", "beacon"):
+    for k in TESTS:
         f, t = res[(setup, k)]
         print("%-17s %-12s flagged: %d / %d" % (setup, k, f, t))
 print("EVALPOISON DONE")
