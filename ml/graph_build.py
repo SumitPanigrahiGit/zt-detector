@@ -2,7 +2,7 @@
 import json, sys, os, collections
 import networkx as nx
 
-WINDOW_NS = 10 * 10**9   # 10 s snapshots
+WINDOW_NS = int(os.environ.get("ZT_WINDOW_S", "10")) * 10**9   # window length in seconds
 AGE_MODE = os.environ.get("ZT_AGE", "real")   # "real" or "proxy" (old behaviour)
 
 

@@ -20,7 +20,7 @@ for ((r = 0; r < N; r++)); do
   docker run -d --name zt-pclient --network zt-net python:alpine sh -c "$JIT" > /dev/null
   sleep $((X - 3))
   T0=$(python3 -c "import time; print(time.clock_gettime_ns(time.CLOCK_MONOTONIC))")
-  for i in 1 2 3 4 5 6; do docker exec zt-py wget -q -T 1 -O /dev/null http://1.1.1.1:8443/ > /dev/null 2>&1; sleep 1; done
+  for i in 1 2 3 4 5 6; do timeout 5 docker exec zt-py wget -q -T 1 -O /dev/null http://1.1.1.1:8443/ > /dev/null 2>&1; sleep 1; done
   for i in $(seq 25); do grep -q "FROZEN zt-py" /tmp/zt_ctl.txt && break; sleep 1; done
   F=$(grep -o 'FROZEN zt-py.*ts_ns=[0-9]*' /tmp/zt_ctl.txt | grep -o 'ts_ns=[0-9]*' | cut -d= -f2)
   PF=$(grep 'flagged=1' /tmp/zt_ctl.txt | grep -c zt-pclient)

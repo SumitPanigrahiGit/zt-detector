@@ -1,5 +1,5 @@
+nohup: ignoring input
 run offset_s phase_s frozen latency_s pclient_flagged
-1 31 1 yes 8.25 0
-2 33 3 yes 6.39 0
-3 35 5 yes 4.58 0
-4 37 7 yes 2.23 0
+1 31 1 yes 8.04 0
+2 33 3 yes 6.24 0
+3 35 5 yes 4.12 0
