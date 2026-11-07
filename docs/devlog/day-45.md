@@ -7,6 +7,7 @@
     1 31 1 yes 8.04 0
     2 33 3 yes 6.24 0
     3 35 5 yes 4.12 0
+    4 37 7 yes 2.18 0
 - Caveats: 8 runs of one scripted attack, one workload and one baseline; freeze covers the cgroup write only; latency is dominated by the 10 s window; not a detection rate
-- Problems: earlier runs stalled after 4 rows because a beacon docker exec blocked on the already-frozen container; fixed with timeout 5
+- Problems: earlier runs stalled after 4 rows because a beacon docker exec blocked on the already-frozen container; fixed with timeout 5; the first devlog was committed with only 3 rows and rebuilt afterwards
 - Next: 5 s windows (ZT_WINDOW_S) and their false-positive cost
