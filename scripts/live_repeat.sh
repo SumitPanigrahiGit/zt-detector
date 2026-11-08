@@ -14,7 +14,7 @@ for ((r = 0; r < N; r++)); do
   sudo setsid ./build/loader -q -c -j /tmp/zt_live.jsonl > /dev/null 2>&1 < /dev/null &
   sleep 2
   sudo chmod a+r /tmp/zt_live.jsonl
-  sudo env ZT_WINDOW_S=${ZT_WINDOW_S:-10} setsid .venv/bin/python ml/controller.py /tmp/zt_live.jsonl --act --seconds 100 > /tmp/zt_ctl.txt 2>&1 < /dev/null &
+  sudo env ZT_WINDOW_S=${ZT_WINDOW_S:-10} ZT_LEARN_L=${ZT_LEARN_L:-12} setsid .venv/bin/python ml/controller.py /tmp/zt_live.jsonl --act --seconds 100 > /tmp/zt_ctl.txt 2>&1 < /dev/null &
   docker run -d --name zt-py --network zt-net python:alpine python -m http.server 8000 > /dev/null
   sleep 3
   docker run -d --name zt-pclient --network zt-net python:alpine sh -c "$JIT" > /dev/null

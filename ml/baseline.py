@@ -1,5 +1,5 @@
 """baseline.py - trains the python:alpine baseline and scores single windows."""
-import glob, random
+import glob, os, random
 import torch
 from torch_geometric.loader import DataLoader
 from graph_build import load, windows
@@ -7,7 +7,7 @@ from encode import build_vocab, encode
 from train import RGCNAE, window_scores
 
 
-def learning_windows(pattern="data/pyjl_*.jsonl", L=12):
+def learning_windows(pattern="data/pyjl_*.jsonl", L=int(os.environ.get("ZT_LEARN_L", "12"))):
     runs = []
     for f in sorted(glob.glob(pattern)):
         ws = [g for n in ["zt-py", "zt-pclient"] for g in windows(load(f, n)) if g.number_of_nodes() > 0]
