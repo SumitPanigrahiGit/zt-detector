@@ -7,7 +7,7 @@
     beacon  recordings detected  act-on-1: 36 / 36   2-in-a-row: 36 / 36
     burst   recordings detected  act-on-1: 33 / 36   2-in-a-row: 30 / 36
     REPLAY DONE
-- Observation: at 5 s, 4 of 252 normal windows were flagged (0 of 132 at 10 s); burst fell to 33/36; requiring 2 in a row removed all 4 false positives at a cost of 3 burst detections
+- Observation: at 5 s, 4 window-seed flags of 252 checks, which are only 2 distinct windows (seq 1 window 14 under seeds 0,1,2; window 7 under seed 2), all steady, all from learning run 1; burst fell to 33/36; requiring 2 in a row removed all flags at a cost of 3 burst detections
 - Caveats: window-seed counts are not independent; live latency at 5 s not yet measured
 - Problems: none recorded
 - Next: identify the 4 flagged windows, then measure live latency at 5 s (sudo env ZT_WINDOW_S=5)
