@@ -19,5 +19,5 @@
     6 41 1 yes 3.63 0
     REPEAT DONE
 - Caveats: 6 runs of one scripted attack, one workload and baseline; flagged-window counts are not independent; the freeze covers the cgroup write only
-- Problems: none recorded
+- Problems: run 3 of the live 5 s test flagged zt-pclient (a normal container), which act mode would have frozen; offsets and window count are small, so this shows a cost, not a rate
 - Next: choose the window size from the measured trade-off
