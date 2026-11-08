@@ -30,6 +30,7 @@ for ((r = 0; r < N; r++)); do
     L=none; S=no
   fi
   echo "$((r + 1)) $X $((X % 10)) $S $L $PF"
+  cp /tmp/zt_ctl.txt /tmp/zt_ctl_run$((r + 1)).txt
   for c in zt-py zt-pclient; do
     CID=$(docker inspect -f '{{.Id}}' $c 2> /dev/null)
     [ -n "$CID" ] && sudo sh -c "echo 0 > /sys/fs/cgroup/system.slice/docker-$CID.scope/cgroup.freeze" 2> /dev/null
