@@ -14,3 +14,4 @@
 - Caveats: same baseline and seed across runs, so flags are not independent; L=24 not yet tested for attack detection or live
 - Problems: none recorded
 - Next: confirm attacks at L=24 offline, then rerun live 5 s with L=24
+- Offline attack check at 5 s (ml/diag_L2.py): L=12 beacon 36/36, burst 33/36; L=24 beacon 36/36, burst 36/36
