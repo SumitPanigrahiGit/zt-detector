@@ -52,7 +52,8 @@ def tick(entries, base, args):
         for g in ws[c["scored"]:]:
             flagged, s, thr = is_flagged(base, g)
             log("WINDOW %s startup=%d score=%.4f thr=%.4f flagged=%d" % (name, g.graph["startup"], s, thr, flagged))
-            if flagged:
+            c["streak"] = c.get("streak", 0) + 1 if flagged else 0
+            if flagged and c["streak"] >= args.consecutive:
                 c["done"] = True
                 if args.act:
                     t = now_ns()
@@ -70,6 +71,7 @@ def main():
     ap.add_argument("--act", action="store_true")
     ap.add_argument("--image", default="python:alpine")
     ap.add_argument("--seconds", type=int, default=120)
+    ap.add_argument("--consecutive", type=int, default=1)
     args = ap.parse_args()
     base = train_baseline()
     log("READY thresholds steady=%.4f startup=%.4f act=%s" % (base["ts"], base["tt"], args.act))

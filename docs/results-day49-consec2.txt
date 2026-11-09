@@ -1,0 +1,12 @@
+nohup: ignoring input
+run offset_s phase_s frozen latency_s pclient_flagged
+1 31 1 yes 8.19 0
+2 33 3 yes 6.50 0
+3 35 5 yes 9.50 0
+4 37 7 yes 7.51 0
+5 39 9 yes 5.48 0
+6 41 1 yes 8.48 0
+sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
+sudo: a password is required
+sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
+sudo: a password is required
