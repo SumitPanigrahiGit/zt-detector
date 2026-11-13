@@ -12,7 +12,8 @@
     bad name -> 404
     unknown -> 404
     API TEST DONE
-- Notes: the encoded-path "bad name" test returned 404 (rejected by the router before validation); the validation branch was tested separately with names the router accepts; scale test used a synthetic log
-- Caveats: no authentication (localhost only); one throwaway container; synthetic log for scale
+- Validation: names with invalid characters, a leading dash and 70 characters all returned 400; the encoded-path test returned 404 because the router rejected it before the regex ran
+- Scale: synthetic 538 KB log (6000 events): /events 21.6 ms, /containers 19.1 ms; the reader is capped at 1 MB per request
+- Caveats: no authentication (localhost only); one throwaway container; synthetic log for the scale test, which was smaller than the 1 MB planned
 - Problems: none recorded
-- Next: SOC dashboard page served by the API
+- Next: dashboard page served by the API
