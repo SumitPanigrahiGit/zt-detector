@@ -1,0 +1,35 @@
+nohup: ignoring input
+== 1) ptrace (Day 9) ==
+PASS: ptrace events captured
+== 2) mprotect W+X (Day 10) ==
+PASS: W+X mprotect captured
+== 3) dropped-event counter (Day 18) ==
+PASS: drop counter works (dropped=4585)
+== 4) stale cache and container names (Day 14) ==
+PASS: zt-a and zt-b attributed correctly
+== 5) regression: smoke test ==
+PASS: smoke test
+
+== 6) process exit (Day 22) ==
+PASS: exit code 3 captured
+== 7) container start/stop (Day 23) ==
+PASS: container start and stop recorded with name
+== 8) in-kernel container filter (Day 24) ==
+PASS: host events filtered in kernel (filtered=6017, dropped=0)
+== 9) latency (Day 25) ==
+PASS: latency measured (n=807 p50=63us p99=305us)
+== 10) attack demo (Day 26) ==
+PASS: attack demo: ptrace, W+X, shell and new destination all flagged
+== 11) graph encoding (Day 30) ==
+PASS: graphs encoded, structural checks passed
+== 12) model training (Day 31) ==
+PASS: model trained, loss halved
+== 13) image in events (Day 39) ==
+PASS: image recorded in lifecycle and exec events
+== 14) encoding at 10 s (Day 50) ==
+PASS: graphs encode
+== 15) replay reproduces Day 43 (Day 50) ==
+PASS: replay matches Day 43
+== 16) controller dry run (Day 50) ==
+PASS: dry run flags the beacon and freezes nothing
+ALL VERIFIED
