@@ -1,0 +1,10 @@
+GET /health -> 200 0.026707
+GET /events -> 200 0.003314
+GET /containers -> 200 0.003329
+GET /alerts -> 200 0.002639
+before: frozen 1
+POST unfreeze -> {"name":"zt-api-t","frozen":0}
+after:  frozen 0
+bad name -> 404
+unknown -> 404
+API TEST DONE
