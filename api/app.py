@@ -1,6 +1,7 @@
 """app.py - read-only telemetry API plus unfreeze. Run: sudo .venv/bin/uvicorn api.app:app --host 127.0.0.1 --port 8000"""
 import glob, json, os, re, subprocess
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 
 EVENTS = os.environ.get("ZT_EVENTS", "/tmp/zt_live.jsonl")
 CTL = os.environ.get("ZT_CTL", "/tmp/zt_ctl.txt")
@@ -97,3 +98,9 @@ def unfreeze(name: str):
     with open(d + "/cgroup.freeze", "w") as f:
         f.write("0")
     return {"name": name, "frozen": frozen_state(cid)}
+
+
+@app.get("/", response_class=HTMLResponse)
+def dashboard():
+    with open(os.path.join(os.path.dirname(__file__), "dashboard.html")) as f:
+        return f.read()

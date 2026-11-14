@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>zt-detector SOC</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:1.5rem;background:#0f1419;color:#e6e6e6}
+h1{font-size:1.2rem} h2{font-size:1rem;margin-top:1.5rem}
+table{border-collapse:collapse;width:100%} td,th{border:1px solid #333;padding:.3rem .5rem;text-align:left}
+.frozen{color:#ff6b6b;font-weight:bold} .ok{color:#6bff95}
+pre{background:#161b22;padding:.5rem;max-height:18rem;overflow:auto;font-size:.8rem}
+button{cursor:pointer}
+</style></head><body>
+<h1>zt-detector - runtime container monitor</h1>
+<div id="status">connecting...</div>
+<h2>Containers</h2>
+<table><thead><tr><th>Name</th><th>ID</th><th>Image</th><th>State</th><th></th></tr></thead><tbody id="ct"></tbody></table>
+<h2>Alerts (latest 50)</h2>
+<pre id="al"></pre>
+<script>
+async function unfreeze(name){
+  const r = await fetch("/unfreeze/" + encodeURIComponent(name), {method:"POST"});
+  document.getElementById("status").textContent = "unfreeze " + name + ": HTTP " + r.status;
+  refresh();
+}
+function cell(tr, text, cls){
+  const td = document.createElement("td"); td.textContent = text;
+  if (cls) td.className = cls; tr.appendChild(td); return td;
+}
+async function refresh(){
+  try{
+    const c = await (await fetch("/containers")).json();
+    const tb = document.getElementById("ct"); tb.replaceChildren();
+    for (const x of c){
+      const tr = document.createElement("tr");
+      cell(tr, x.name); cell(tr, x.id); cell(tr, x.image || "?");
+      const st = x.stopped ? "stopped" : (x.frozen === 1 ? "FROZEN" : "running");
+      cell(tr, st, x.frozen === 1 ? "frozen" : "ok");
+      const td = document.createElement("td");
+      if (x.frozen === 1){
+        const b = document.createElement("button"); b.textContent = "Unfreeze";
+        b.addEventListener("click", () => unfreeze(x.name)); td.appendChild(b);
+      }
+      tr.appendChild(td); tb.appendChild(tr);
+    }
+    const a = await (await fetch("/alerts")).json();
+    document.getElementById("al").textContent = a.join("\n");
+    document.getElementById("status").textContent = "updated " + new Date().toLocaleTimeString();
+  }catch(e){ document.getElementById("status").textContent = "API unreachable"; }
+}
+refresh(); setInterval(refresh, 2000);
+</script></body></html>
