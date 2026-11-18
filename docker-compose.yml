@@ -1,0 +1,27 @@
+services:
+  loader:
+    build:
+      context: .
+      dockerfile: Dockerfile.loader
+    privileged: true        # required for eBPF; a real security cost, see README
+    pid: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /sys/kernel/debug:/sys/kernel/debug
+      - /sys/fs/bpf:/sys/fs/bpf
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ztdata:/data
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "127.0.0.1:8000:8000"   # local only
+    read_only: true
+    volumes:
+      - ztdata:/data:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    depends_on:
+      - loader
+volumes:
+  ztdata:
