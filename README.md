@@ -27,3 +27,11 @@ Security notes:
 - The API has no authentication.
 - The controller is not part of Compose; it stays a manual, dry-run-by-default command.
 - Tested only on WSL2 (Ubuntu 24.04, kernel 6.18).
+
+## ML part (not included in a fresh clone)
+Datasets (`data/`) and the virtualenv are git-ignored. To reproduce:
+    python3 -m venv .venv && source .venv/bin/activate
+    pip install networkx fastapi uvicorn
+    pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install torch_geometric
+    ./scripts/record_normal3.sh      # normal nginx recordings (about 22 min)
+    ./scripts/stealth2.sh beacon 1   # attack recordings, see scripts/
