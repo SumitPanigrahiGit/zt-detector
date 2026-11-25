@@ -35,3 +35,5 @@ PASS: replay matches Day 43
 NOTE: this run was interrupted during check 16 (15 PASS lines, no ALL VERIFIED line).
 Check 16 was then run alone (scripts/live_test.sh dry) and behaved as required.
 Checks 1 to 15 completed in this run.
+
+UPDATE: a later full foreground run reached ALL VERIFIED with 16 PASS lines (docs/results-final-verify2.txt).
