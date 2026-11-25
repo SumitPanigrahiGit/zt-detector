@@ -1,4 +1,12 @@
 # Zero-Trust Runtime Container Anomaly & eBPF Process Hijack Detector
+
+eBPF syscall tracing, per-container process graphs, an R-GCN autoencoder trained on normal behaviour, and reversible containment (cgroup freeze, dry-run by default).
+
+**Status:** v1.0, a student project measured on one machine (WSL2, Ubuntu 24.04, kernel 6.18).
+**Not claimed:** detection of real exploits. All attacks are scripted simulations. Counts in `docs/results-index.md` are not rates.
+
+Quick start: see "Run with Docker Compose" below. Full write-up: `docs/WHITEPAPER.md`. Re-test everything: `./scripts/verify_all.sh`.
+
 eBPF syscall tracing + Graph Neural Network + automated container containment.
 
 ## Progress
