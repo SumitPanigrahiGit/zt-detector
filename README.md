@@ -7,9 +7,6 @@ eBPF syscall tracing, per-container process graphs, an R-GCN autoencoder trained
 
 Quick start: see "Run with Docker Compose" below. Full write-up: `docs/WHITEPAPER.md`. Re-test everything: `./scripts/verify_all.sh`.
 
-eBPF syscall tracing + Graph Neural Network + automated container containment.
-
-## Progress
 Daily logs are in `docs/devlog/`.
 
 ## Tools
